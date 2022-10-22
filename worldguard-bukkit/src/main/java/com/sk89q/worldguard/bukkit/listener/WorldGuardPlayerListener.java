@@ -20,6 +20,8 @@
 package com.sk89q.worldguard.bukkit.listener;
 
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.util.formatting.text.TextComponent;
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldedit.world.gamemode.GameMode;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.WorldGuard;
@@ -276,9 +278,10 @@ public class WorldGuardPlayerListener extends AbstractListener {
                         }
                     }
 
-                    localPlayer.print("Applicable regions: " + str);
+                    localPlayer.print(TranslatableComponent.of("worldguard.listener.applicable-regions").args(
+                            TextComponent.of(str.toString())));
                 } else {
-                    localPlayer.print("WorldGuard: No defined regions here!");
+                    localPlayer.print(TranslatableComponent.of("worldguard.listener.no-defined-regions-here"));
                 }
 
                 event.setUseItemInHand(Event.Result.DENY);

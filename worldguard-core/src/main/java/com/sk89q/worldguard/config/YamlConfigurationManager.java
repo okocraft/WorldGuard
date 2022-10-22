@@ -22,6 +22,8 @@ package com.sk89q.worldguard.config;
 import com.google.common.collect.ImmutableMap;
 import com.sk89q.util.yaml.YAMLFormat;
 import com.sk89q.util.yaml.YAMLProcessor;
+import com.sk89q.worldedit.WorldEdit;
+import com.sk89q.worldedit.extension.platform.Capability;
 import com.sk89q.worldguard.protection.managers.storage.DriverType;
 import com.sk89q.worldguard.protection.managers.storage.RegionDriver;
 import com.sk89q.worldguard.protection.managers.storage.file.DirectoryYamlDriver;
@@ -29,6 +31,7 @@ import com.sk89q.worldguard.protection.managers.storage.sql.SQLDriver;
 import com.sk89q.worldedit.util.report.Unreported;
 import com.sk89q.worldguard.util.sql.DataSourceConfig;
 
+import com.sk89q.worldguard.util.translation.TranslationAdder;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -43,6 +46,9 @@ public abstract class YamlConfigurationManager extends ConfigurationManager {
     @Override
     public void load() {
         copyDefaults();
+
+        TranslationAdder.addAndSaveTranslations();
+        WorldEdit.getInstance().getPlatformManager().queryCapability(Capability.CONFIGURATION).reload();
 
         config = new YAMLProcessor(new File(getDataFolder(), "config.yml"), true, YAMLFormat.EXTENDED);
         try {

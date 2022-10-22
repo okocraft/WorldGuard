@@ -19,6 +19,9 @@
 
 package com.sk89q.worldguard.protection.flags;
 
+import com.sk89q.worldedit.util.formatting.text.TextComponent;
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
+
 /**
  * A boolean flag.
  */
@@ -45,7 +48,10 @@ public class BooleanFlag extends Flag<Boolean> {
                 || input.equalsIgnoreCase("0")) {
             return false;
         } else {
-            throw new InvalidFlagFormat("Not a yes/no value: " + input);
+            throw new InvalidFlagFormat(
+                    TranslatableComponent.of("worldguard.error.flag.boolean-flag.not-yes-no-value")
+                            .args(TextComponent.of(input))
+            );
         }
     }
 

@@ -22,26 +22,25 @@ package com.sk89q.worldguard.commands.region;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.sk89q.minecraft.util.commands.Command;
 import com.sk89q.minecraft.util.commands.CommandContext;
-import com.sk89q.minecraft.util.commands.CommandException;
-import com.sk89q.minecraft.util.commands.CommandPermissionsException;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.command.util.AsyncCommandBuilder;
 import com.sk89q.worldedit.extension.platform.Actor;
 import com.sk89q.worldedit.extension.platform.Capability;
 import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.util.Location;
-import com.sk89q.worldedit.util.formatting.component.ErrorFormat;
-import com.sk89q.worldedit.util.formatting.component.LabelFormat;
-import com.sk89q.worldedit.util.formatting.component.SubtleFormat;
+import com.sk89q.worldedit.util.formatting.WorldEditText;
 import com.sk89q.worldedit.util.formatting.text.Component;
 import com.sk89q.worldedit.util.formatting.text.TextComponent;
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldedit.util.formatting.text.event.ClickEvent;
 import com.sk89q.worldedit.util.formatting.text.event.HoverEvent;
 import com.sk89q.worldedit.util.formatting.text.format.TextColor;
 import com.sk89q.worldedit.util.formatting.text.format.TextDecoration;
+import com.sk89q.worldedit.util.formatting.text.serializer.legacy.LegacyComponentSerializer;
 import com.sk89q.worldedit.world.World;
 import com.sk89q.worldedit.world.gamemode.GameModes;
 import com.sk89q.worldguard.LocalPlayer;
@@ -72,11 +71,9 @@ import com.sk89q.worldguard.protection.managers.migration.WorldHeightMigration;
 import com.sk89q.worldguard.protection.managers.storage.DriverType;
 import com.sk89q.worldguard.protection.managers.storage.RegionDriver;
 import com.sk89q.worldguard.protection.regions.GlobalProtectedRegion;
-import com.sk89q.worldguard.protection.regions.ProtectedPolygonalRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion.CircularInheritanceException;
 import com.sk89q.worldguard.protection.regions.RegionContainer;
-import com.sk89q.worldguard.protection.util.DomainInputResolver.UserLocatorPolicy;
 import com.sk89q.worldguard.protection.util.WorldEditRegionConverter;
 import com.sk89q.worldguard.session.Session;
 import com.sk89q.worldguard.util.Enums;
@@ -89,6 +86,7 @@ import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import org.enginehub.piston.exception.CommandException;
 
 /**
  * Implements the /region commands for WorldGuard.
@@ -103,27 +101,27 @@ public final class RegionCommands extends RegionCommandsBase {
         this.worldGuard = worldGuard;
     }
 
-    private static TextComponent passthroughFlagWarning = TextComponent.empty()
-            .append(TextComponent.of("WARNING:", TextColor.RED, Sets.newHashSet(TextDecoration.BOLD)))
-            .append(ErrorFormat.wrap(" This flag is unrelated to moving through regions."))
+    private static Component passthroughFlagWarning = TextComponent.empty()
+            .append(TranslatableComponent.of("worldguard.command.region.flag.passthrough-flag-warning.prefix", TextColor.RED, Sets.newHashSet(TextDecoration.BOLD)))
+            .append(TextComponent.space())
+            .append(TranslatableComponent.of("worldguard.command.region.flag.passthrough-flag-warning.message", TextColor.RED))
             .append(TextComponent.newline())
-            .append(TextComponent.of("It overrides build checks. If you're unsure what this means, see ")
-                    .append(TextComponent.of("[this documentation page]", TextColor.AQUA)
+            .append(TranslatableComponent.of("worldguard.command.region.flag.passthrough-flag-warning.info")
+                    .args(TextComponent.of("[this documentation page]", TextColor.AQUA)
                             .clickEvent(ClickEvent.of(ClickEvent.Action.OPEN_URL,
-                                    "https://worldguard.enginehub.org/en/latest/regions/flags/#overrides")))
-                    .append(TextComponent.of(" for more info.")));
-    private static TextComponent buildFlagWarning = TextComponent.empty()
-            .append(TextComponent.of("WARNING:", TextColor.RED, Sets.newHashSet(TextDecoration.BOLD)))
-            .append(ErrorFormat.wrap(" Setting this flag is not required for protection."))
+                                    "https://worldguard.enginehub.org/en/latest/regions/flags/#overrides"))));
+
+    private static Component buildFlagWarning = TextComponent.empty()
+            .append(TranslatableComponent.of("worldguard.command.region.flag.build-flag-warning.prefix", TextColor.RED, Sets.newHashSet(TextDecoration.BOLD)))
+            .append(TextComponent.space())
+            .append(TranslatableComponent.of("worldguard.command.region.flag.build-flag-warning.message", TextColor.RED))
             .append(TextComponent.newline())
-            .append(TextComponent.of("Setting this flag will completely override default protection, and apply" +
-                    " to members, non-members, pistons, sand physics, and everything else that can modify blocks."))
+            .append(TranslatableComponent.of("worldguard.command.region.flag.build-flag-warning.info-line1"))
             .append(TextComponent.newline())
-            .append(TextComponent.of("Only set this flag if you are sure you know what you are doing. See ")
-                    .append(TextComponent.of("[this documentation page]", TextColor.AQUA)
+            .append(TranslatableComponent.of("worldguard.command.region.flag.build-flag-warning.info-line2")
+                    .args(TextComponent.of("[this documentation page]", TextColor.AQUA)
                             .clickEvent(ClickEvent.of(ClickEvent.Action.OPEN_URL,
-                                    "https://worldguard.enginehub.org/en/latest/regions/flags/#protection-related")))
-                    .append(TextComponent.of(" for more info.")));
+                                    "https://worldguard.enginehub.org/en/latest/regions/flags/#protection-related"))));
 
     /**
      * Defines a new region.
@@ -142,7 +140,11 @@ public final class RegionCommands extends RegionCommandsBase {
 
         // Check permissions
         if (!getPermissionModel(sender).mayDefine()) {
-            throw new CommandPermissionsException();
+            // TODO: if we use piston correctly, we can remove this.
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
         }
 
         String id = checkRegionId(args.getString(0), false);
@@ -168,12 +170,15 @@ public final class RegionCommands extends RegionCommandsBase {
                 .registerWithSupervisor(worldGuard.getSupervisor(), description)
                 .onSuccess((Component) null,
                         t -> {
-                            sender.print(String.format("A new region has been made named '%s'.", region.getId()));
+                            sender.print(TranslatableComponent.of("worldguard.command.region.define.new-region").args(TextComponent.of(region.getId())));
                             warnAboutDimensions(sender, region);
                             informNewUser(sender, manager, region);
                             checkSpawnOverlap(sender, world, region);
                         })
-                .onFailure(String.format("Failed to add the region '%s'", region.getId()), worldGuard.getExceptionConverter())
+                .onFailure(
+                        TranslatableComponent.of("worldguard.error.command.region.define.failed")
+                                .args(TextComponent.of(region.getId())),
+                        worldGuard.getExceptionConverter())
                 .buildAndExec(worldGuard.getExecutorService());
     }
 
@@ -201,7 +206,11 @@ public final class RegionCommands extends RegionCommandsBase {
 
         // Check permissions
         if (!getPermissionModel(sender).mayRedefine(existing)) {
-            throw new CommandPermissionsException();
+            // TODO: if we use piston correctly, we can remove this.
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
         }
 
         ProtectedRegion region;
@@ -213,21 +222,23 @@ public final class RegionCommands extends RegionCommandsBase {
         }
 
         region.copyFrom(existing);
-
+        sender.print(TranslatableComponent.of(""));
         RegionAdder task = new RegionAdder(manager, region);
-
-        final String description = String.format("Updating region '%s'", region.getId());
+        final String description = LegacyComponentSerializer.legacy().serialize(
+                WorldEditText.format(TranslatableComponent.of("worldguard.command.region.redefine.updating-region")
+                        .args(TextComponent.of(region.getId())), sender.getLocale())
+        );
         AsyncCommandBuilder.wrap(task, sender)
                 .registerWithSupervisor(worldGuard.getSupervisor(), description)
-                .sendMessageAfterDelay("(Please wait... " + description + ")")
+                .setDelayMessage(TranslatableComponent.of("worldguard.command.region.redefine.delay-message").args(TextComponent.of(description)))
                 .onSuccess((Component) null,
                         t -> {
-                            sender.print(String.format("Region '%s' has been updated with a new area.", region.getId()));
+                            sender.print(TranslatableComponent.of("worldguard.command.region.redefine.updated").args(TextComponent.of(region.getId())));
                             warnAboutDimensions(sender, region);
                             informNewUser(sender, manager, region);
                             checkSpawnOverlap(sender, world, region);
                         })
-                .onFailure(String.format("Failed to update the region '%s'", region.getId()), worldGuard.getExceptionConverter())
+                .onFailure(TranslatableComponent.of("worldguard.error.command.region.redefine.failed").args(TextComponent.of(region.getId())), worldGuard.getExceptionConverter())
                 .buildAndExec(worldGuard.getExecutorService());
     }
 
@@ -253,7 +264,11 @@ public final class RegionCommands extends RegionCommandsBase {
 
         // Check permissions
         if (!permModel.mayClaim()) {
-            throw new CommandPermissionsException();
+            // TODO: if we use piston correctly, we can remove this.
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
         }
 
         String id = checkRegionId(args.getString(0), false);
@@ -271,7 +286,9 @@ public final class RegionCommands extends RegionCommandsBase {
             if (maxRegionCount >= 0
                     && manager.getRegionCountOfPlayer(player) >= maxRegionCount) {
                 throw new CommandException(
-                        "You own too many regions, delete one first to claim a new one.");
+                        TranslatableComponent.of("worldguard.error.command.region.claim.too-many-regions"),
+                        ImmutableList.of()
+                );
             }
         }
 
@@ -281,7 +298,9 @@ public final class RegionCommands extends RegionCommandsBase {
         if (existing != null) {
             if (!existing.getOwners().contains(player)) {
                 throw new CommandException(
-                        "This region already exists and you don't own it.");
+                        TranslatableComponent.of("worldguard.error.command.region.claim.region-already-exists"),
+                        ImmutableList.of()
+                );
             }
         }
 
@@ -291,29 +310,34 @@ public final class RegionCommands extends RegionCommandsBase {
         // Check if this region overlaps any other region
         if (regions.size() > 0) {
             if (!regions.isOwnerOfAll(player)) {
-                throw new CommandException("This region overlaps with someone else's region.");
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.error.command.region.claim.overlaps"),
+                        ImmutableList.of()
+                );
             }
         } else {
             if (wcfg.claimOnlyInsideExistingRegions) {
-                throw new CommandException("You may only claim regions inside " +
-                        "existing regions that you or your group own.");
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.error.command.region.claim.only-inside"),
+                        ImmutableList.of()
+                );
             }
         }
 
         if (wcfg.maxClaimVolume >= Integer.MAX_VALUE) {
-            throw new CommandException("The maximum claim volume get in the configuration is higher than is supported. " +
-                    "Currently, it must be " + Integer.MAX_VALUE + " or smaller. Please contact a server administrator.");
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.region.claim.config-maximum-volume-invalid")
+                            .args(TextComponent.of(Integer.MAX_VALUE)),
+                    ImmutableList.of()
+            );
         }
 
         // Check claim volume
         if (!permModel.mayClaimRegionsUnbounded()) {
-            if (region instanceof ProtectedPolygonalRegion) {
-                throw new CommandException("Polygons are currently not supported for /rg claim.");
-            }
-
             if (region.volume() > wcfg.maxClaimVolume) {
-                player.printError("This region is too large to claim.");
-                player.printError("Max. volume: " + wcfg.maxClaimVolume + ", your volume: " + region.volume());
+                player.printError(TranslatableComponent.of("worldguard.error.command.region.claim.too-large"));
+                player.printError(TranslatableComponent.of("worldguard.error.command.region.claim.too-large.min-max")
+                        .args(TextComponent.of(wcfg.maxClaimVolume), TextComponent.of(region.volume())));
                 return;
             }
         }
@@ -325,14 +349,14 @@ public final class RegionCommands extends RegionCommandsBase {
                 try {
                     region.setParent(templateRegion);
                 } catch (CircularInheritanceException e) {
-                    throw new CommandException(e.getMessage());
+                    throw new CommandException(TextComponent.empty(), ImmutableList.of());
                 }
             }
         }
 
         region.getOwners().addPlayer(player);
         manager.addRegion(region);
-        player.print(TextComponent.of(String.format("A new region has been claimed named '%s'.", id)));
+        player.print(TranslatableComponent.of("worldguard.command.region.claim.claimed").args(TextComponent.of(id)));
     }
 
     /**
@@ -356,7 +380,11 @@ public final class RegionCommands extends RegionCommandsBase {
         if (args.argsLength() == 0) {
             LocalPlayer player = worldGuard.checkPlayer(sender);
             if (!player.getWorld().equals(world)) { // confusing to get current location regions in another world
-                throw new CommandException("Please specify a region name."); // just don't allow that
+                // just don't allow that
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.error.command.region.select.specify-name"),
+                        ImmutableList.of()
+                );
             }
             world = player.getWorld();
             existing = checkRegionStandingIn(manager, player, "/rg select -w \"" + world.getName() + "\" %id%");
@@ -366,7 +394,11 @@ public final class RegionCommands extends RegionCommandsBase {
 
         // Check permissions
         if (!getPermissionModel(sender).maySelect(existing)) {
-            throw new CommandPermissionsException();
+            // TODO: if we use piston correctly, we can remove this.
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
         }
 
         // Select
@@ -397,7 +429,10 @@ public final class RegionCommands extends RegionCommandsBase {
 
         if (args.argsLength() == 0) { // Get region from where the player is
             if (!(sender instanceof LocalPlayer)) {
-                throw new CommandException("Please specify the region with /region info -w world_name region_name.");
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.error.command.region.info.specify-region"),
+                        ImmutableList.of()
+                );
             }
 
             existing = checkRegionStandingIn(manager, (LocalPlayer) sender, true,
@@ -408,14 +443,22 @@ public final class RegionCommands extends RegionCommandsBase {
 
         // Check permissions
         if (!permModel.mayLookup(existing)) {
-            throw new CommandPermissionsException();
+            // TODO: if we use piston correctly, we can remove this.
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
         }
 
         // Let the player select the region
         if (args.hasFlag('s')) {
             // Check permissions
             if (!permModel.maySelect(existing)) {
-                throw new CommandPermissionsException();
+                // TODO: if we use piston correctly, we can remove this.
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.error.command.no-permission"),
+                        ImmutableList.of()
+                );
             }
 
             setPlayerSelection(worldGuard.checkPlayer(sender), existing, world);
@@ -425,14 +468,18 @@ public final class RegionCommands extends RegionCommandsBase {
         RegionPrintoutBuilder printout = new RegionPrintoutBuilder(world.getName(), existing,
                 args.hasFlag('u') ? null : WorldGuard.getInstance().getProfileCache(), sender);
 
+        final String description = LegacyComponentSerializer.legacy().serialize(WorldEditText.format(
+                TranslatableComponent.of("worldguard.command.region.info.fetching-region-info"),
+                sender.getLocale()
+        ));
         AsyncCommandBuilder.wrap(printout, sender)
-                .registerWithSupervisor(WorldGuard.getInstance().getSupervisor(), "Fetching region info")
-                .sendMessageAfterDelay("(Please wait... fetching region information...)")
+                .registerWithSupervisor(WorldGuard.getInstance().getSupervisor(), description)
+                .setDelayMessage(TranslatableComponent.of("worldguard.command.region.info.delay-message"))
                 .onSuccess((Component) null, component -> {
                     sender.print(component);
                     checkSpawnOverlap(sender, world, existing);
                 })
-                .onFailure("Failed to fetch region information", WorldGuard.getInstance().getExceptionConverter())
+                .onFailure(TranslatableComponent.of("worldguard.error.command.region.info.failure"), WorldGuard.getInstance().getExceptionConverter())
                 .buildAndExec(WorldGuard.getInstance().getExecutorService());
     }
 
@@ -471,7 +518,11 @@ public final class RegionCommands extends RegionCommandsBase {
         if (!getPermissionModel(sender).mayList(ownedBy)) {
             ownedBy = sender.getName(); // assume they only want their own
             if (!getPermissionModel(sender).mayList(ownedBy)) {
-                throw new CommandPermissionsException();
+                // TODO: if we use piston correctly, we can remove this.
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.error.command.no-permission"),
+                        ImmutableList.of()
+                );
             }
         }
 
@@ -492,11 +543,17 @@ public final class RegionCommands extends RegionCommandsBase {
         if (args.hasFlag('i')) {
             task.filterIdByMatch(args.getFlag('i'));
         }
-
+        final String description = LegacyComponentSerializer.legacy().serialize(WorldEditText.format(
+                TranslatableComponent.of("worldguard.command.region.list.getting-region-list"),
+                sender.getLocale()
+        ));
         AsyncCommandBuilder.wrap(task, sender)
-                .registerWithSupervisor(WorldGuard.getInstance().getSupervisor(), "Getting region list")
-                .sendMessageAfterDelay("(Please wait... fetching region list...)")
-                .onFailure("Failed to fetch region list", WorldGuard.getInstance().getExceptionConverter())
+                .registerWithSupervisor(WorldGuard.getInstance().getSupervisor(), description)
+                .setDelayMessage(TranslatableComponent.of("worldguard.command.region.list.delay-message"))
+                .onFailure(
+                        TranslatableComponent.of("worldguard.error.command.region.list.failure"),
+                        WorldGuard.getInstance().getExceptionConverter()
+                )
                 .buildAndExec(WorldGuard.getInstance().getExecutorService());
     }
 
@@ -524,7 +581,10 @@ public final class RegionCommands extends RegionCommandsBase {
 
         if (args.hasFlag('e')) {
             if (value != null) {
-                throw new CommandException("You cannot use -e(mpty) with a flag value.");
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.error.command.region.flag.cannot-use-empty"),
+                        ImmutableList.of()
+                );
             }
 
             value = "";
@@ -536,7 +596,11 @@ public final class RegionCommands extends RegionCommandsBase {
 
         // Check permissions
         if (!permModel.maySetFlag(existing)) {
-            throw new CommandPermissionsException();
+            // TODO: if we use piston correctly, we can remove this.
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
         }
         String regionId = existing.getId();
 
@@ -545,9 +609,13 @@ public final class RegionCommands extends RegionCommandsBase {
         // We didn't find the flag, so let's print a list of flags that the user
         // can use, and do nothing afterwards
         if (foundFlag == null) {
+            final String description = LegacyComponentSerializer.legacy().serialize(WorldEditText.format(
+                    TranslatableComponent.of("worldguard.command.region.flag.flag-list-for-invalid"),
+                    sender.getLocale()
+            ));
             AsyncCommandBuilder.wrap(new FlagListBuilder(flagRegistry, permModel, existing, world,
                                                          regionId, sender, flagName), sender)
-                    .registerWithSupervisor(WorldGuard.getInstance().getSupervisor(), "Flag list for invalid flag command.")
+                    .registerWithSupervisor(WorldGuard.getInstance().getSupervisor(), description)
                     .onSuccess((Component) null, sender::print)
                     .onFailure((Component) null, WorldGuard.getInstance().getExceptionConverter())
                     .buildAndExec(WorldGuard.getInstance().getExecutorService());
@@ -556,12 +624,12 @@ public final class RegionCommands extends RegionCommandsBase {
             if (foundFlag == Flags.BUILD || foundFlag == Flags.BLOCK_BREAK || foundFlag == Flags.BLOCK_PLACE) {
                 sender.print(buildFlagWarning);
                 if (!sender.isPlayer()) {
-                    sender.printRaw("https://worldguard.enginehub.org/en/latest/regions/flags/#protection-related");
+                    sender.print(TextComponent.of("https://worldguard.enginehub.org/en/latest/regions/flags/#protection-related"));
                 }
             } else if (foundFlag == Flags.PASSTHROUGH) {
                 sender.print(passthroughFlagWarning);
                 if (!sender.isPlayer()) {
-                    sender.printRaw("https://worldguard.enginehub.org/en/latest/regions/flags/#overrides");
+                    sender.print(TextComponent.of("https://worldguard.enginehub.org/en/latest/regions/flags/#overrides"));
                 }
             }
         }
@@ -570,7 +638,11 @@ public final class RegionCommands extends RegionCommandsBase {
         // This permission is confusing and probably should be replaced, but
         // but not here -- in the model
         if (!permModel.maySetFlag(existing, foundFlag, value)) {
-            throw new CommandPermissionsException();
+            // TODO: if we use piston correctly, we can remove this.
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
         }
 
         // -g for group flag
@@ -579,8 +651,11 @@ public final class RegionCommands extends RegionCommandsBase {
             RegionGroupFlag groupFlag = foundFlag.getRegionGroupFlag();
 
             if (groupFlag == null) {
-                throw new CommandException("Region flag '" + foundFlag.getName()
-                        + "' does not have a group flag!");
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.command.region.flag.flag-does-not-have-group")
+                                .args(TextComponent.of(foundFlag.getName())),
+                        ImmutableList.of()
+                );
             }
 
             // Parse the [-g group] separately so entire command can abort if parsing
@@ -588,7 +663,7 @@ public final class RegionCommands extends RegionCommandsBase {
             try {
                 groupValue = groupFlag.parseInput(FlagContext.create().setSender(sender).setInput(group).setObject("region", existing).build());
             } catch (InvalidFlagFormat e) {
-                throw new CommandException(e.getMessage());
+                throw new CommandException(e.getRichMessage(), ImmutableList.of());
             }
 
         }
@@ -599,11 +674,17 @@ public final class RegionCommands extends RegionCommandsBase {
             try {
                 value = setFlag(existing, foundFlag, sender, value).toString();
             } catch (InvalidFlagFormat e) {
-                throw new CommandException(e.getMessage());
+                throw new CommandException(e.getRichMessage(), ImmutableList.of());
             }
 
             if (!args.hasFlag('h')) {
-                sender.print("Region flag " + foundFlag.getName() + " set on '" + regionId + "' to '" + value + "'.");
+                sender.print(TranslatableComponent.of("worldguard.command.region.flag.flag-is-set")
+                        .args(
+                                TextComponent.of(foundFlag.getName()),
+                                TextComponent.of(regionId),
+                                TextComponent.of(value)
+                        )
+                );
             }
 
         // No value? Clear the flag, if -g isn't specified
@@ -618,7 +699,9 @@ public final class RegionCommands extends RegionCommandsBase {
             }
 
             if (!args.hasFlag('h')) {
-                sender.print("Region flag " + foundFlag.getName() + " removed from '" + regionId + "'. (Any -g(roups) were also removed.)");
+
+                sender.print(TranslatableComponent.of("worldguard.command.region.flag.flag-is-removed")
+                        .args(TextComponent.of(foundFlag.getName()), TextComponent.of(regionId)));
             }
         }
 
@@ -629,10 +712,13 @@ public final class RegionCommands extends RegionCommandsBase {
             // If group set to the default, then clear the group flag
             if (groupValue == groupFlag.getDefault()) {
                 existing.setFlag(groupFlag, null);
-                sender.print("Region group flag for '" + foundFlag.getName() + "' reset to default.");
+
+                sender.print(TranslatableComponent.of("worldguard.command.region.flag.flag-group-is-reset")
+                        .args(TextComponent.of(foundFlag.getName())));
             } else {
                 existing.setFlag(groupFlag, groupValue);
-                sender.print("Region group flag for '" + foundFlag.getName() + "' set.");
+                sender.print(TranslatableComponent.of("worldguard.command.region.flag.flag-group-is-set")
+                        .args(TextComponent.of(foundFlag.getName())));
             }
         }
 
@@ -642,9 +728,8 @@ public final class RegionCommands extends RegionCommandsBase {
             sendFlagHelper(sender, world, existing, permModel, page);
         } else {
             RegionPrintoutBuilder printout = new RegionPrintoutBuilder(world.getName(), existing, null, sender);
-            printout.append(SubtleFormat.wrap("(Current flags: "));
-            printout.appendFlagsList(false);
-            printout.append(SubtleFormat.wrap(")"));
+            printout.append(TextComponent.builder().append(TranslatableComponent.of("worldguard.command.region.flag.current-flags").args(printout
+                    .getFlagsList(false))).build());
             printout.send(sender);
             checkSpawnOverlap(sender, world, existing);
         }
@@ -663,7 +748,10 @@ public final class RegionCommands extends RegionCommandsBase {
         ProtectedRegion region;
         if (args.argsLength() == 0) { // Get region from where the player is
             if (!(sender instanceof LocalPlayer)) {
-                throw new CommandException("Please specify the region with /region flags -w world_name region_name.");
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.command.region.flags.specify-region"),
+                        ImmutableList.of()
+                );
             }
 
             region = checkRegionStandingIn(manager, (LocalPlayer) sender, true,
@@ -674,7 +762,11 @@ public final class RegionCommands extends RegionCommandsBase {
 
         final RegionPermissionModel perms = getPermissionModel(sender);
         if (!perms.mayLookup(region)) {
-            throw new CommandPermissionsException();
+            // TODO: if we use piston correctly, we can remove this.
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
         }
         int page = args.hasFlag('p') ? args.getFlagInteger('p') : 1;
 
@@ -682,6 +774,7 @@ public final class RegionCommands extends RegionCommandsBase {
     }
 
     private static void sendFlagHelper(Actor sender, World world, ProtectedRegion region, RegionPermissionModel perms, int page) {
+        // TODO: to localize here, we have to modify worldedit...
         final FlagHelperBox flagHelperBox = new FlagHelperBox(world, region, perms);
         flagHelperBox.setComponentsPerPage(18);
         if (!sender.isPlayer()) {
@@ -722,12 +815,17 @@ public final class RegionCommands extends RegionCommandsBase {
 
         // Check permissions
         if (!getPermissionModel(sender).maySetPriority(existing)) {
-            throw new CommandPermissionsException();
+            // TODO: if we use piston correctly, we can remove this.
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
         }
 
         existing.setPriority(priority);
 
-        sender.print("Priority of '" + existing.getId() + "' set to " + priority + " (higher numbers override).");
+        sender.print(TranslatableComponent.of("worldguard.command.region.setpriority.priority-is-set")
+                .args(TextComponent.of(existing.getId()), TextComponent.of(priority)));
         checkSpawnOverlap(sender, world, existing);
     }
 
@@ -763,7 +861,11 @@ public final class RegionCommands extends RegionCommandsBase {
 
         // Check permissions
         if (!getPermissionModel(sender).maySetParent(child, parent)) {
-            throw new CommandPermissionsException();
+            // TODO: if we use piston correctly, we can remove this.
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
         }
 
         try {
@@ -772,25 +874,51 @@ public final class RegionCommands extends RegionCommandsBase {
             // Tell the user what's wrong
             RegionPrintoutBuilder printout = new RegionPrintoutBuilder(world.getName(), parent, null, sender);
             assert parent != null;
-            printout.append(ErrorFormat.wrap("Uh oh! Setting '", parent.getId(), "' to be the parent of '", child.getId(),
-                    "' would cause circular inheritance.")).newline();
-            printout.append(SubtleFormat.wrap("(Current inheritance on '", parent.getId(), "':")).newline();
-            printout.appendParentTree(true);
-            printout.append(SubtleFormat.wrap(")"));
+            printout.append(
+                    TranslatableComponent.of(
+                            "worldguard.command.region.setparent.circular-inheritance",
+                            TextColor.RED)
+            ).newline();
+
+            printout.append(
+                    TranslatableComponent.of(
+                            "worldguard.command.region.setparent.current-inheritance",
+                            TextColor.GRAY
+                    ).args(
+                            TextComponent.of(parent.getId()),
+                            TextComponent.newline()
+                                    .append(printout.getParentTree(true))
+                                    .append(TextComponent.of(")", TextColor.GRAY))
+                    )
+            );
             printout.send(sender);
             return;
         }
 
         // Tell the user the current inheritance
         RegionPrintoutBuilder printout = new RegionPrintoutBuilder(world.getName(), child, null, sender);
-        printout.append(TextComponent.of("Inheritance set for region '" + child.getId() + "'.", TextColor.LIGHT_PURPLE));
+        printout.append(TranslatableComponent.of(
+                "worldguard.command.region.setparent.inheritance-is-set",
+                TextColor.LIGHT_PURPLE
+        ));
         if (parent != null) {
             printout.newline();
-            printout.append(SubtleFormat.wrap("(Current inheritance:")).newline();
-            printout.appendParentTree(true);
-            printout.append(SubtleFormat.wrap(")"));
+            printout.append(
+                    TranslatableComponent.of(
+                            "worldguard.command.region.setparent.current-inheritance",
+                            TextColor.GRAY
+                    ).args(
+                            TextComponent.of(parent.getId()),
+                            TextComponent.newline()
+                                    .append(printout.getParentTree(true))
+                                    .append(TextComponent.of(")", TextColor.GRAY))
+                    )
+            );
         } else {
-            printout.append(LabelFormat.wrap(" Region is now orphaned."));
+            printout.append(TranslatableComponent.of(
+                    "worldguard.command.region.setparent.region-is-now-orphaned",
+                    TextColor.YELLOW)
+            );
         }
         printout.send(sender);
     }
@@ -820,28 +948,42 @@ public final class RegionCommands extends RegionCommandsBase {
 
         // Check permissions
         if (!getPermissionModel(sender).mayDelete(existing)) {
-            throw new CommandPermissionsException();
+            // TODO: if we use piston correctly, we can remove this.
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
         }
 
         RegionRemover task = new RegionRemover(manager, existing);
 
         if (removeChildren && unsetParent) {
-            throw new CommandException("You cannot use both -u (unset parent) and -f (remove children) together.");
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.command.region.remove.cannot-use-u-and-f-together"),
+                    ImmutableList.of()
+            );
         } else if (removeChildren) {
             task.setRemovalStrategy(RemovalStrategy.REMOVE_CHILDREN);
         } else if (unsetParent) {
             task.setRemovalStrategy(RemovalStrategy.UNSET_PARENT_IN_CHILDREN);
         }
 
-        final String description = String.format("Removing region '%s' in '%s'", existing.getId(), world.getName());
+        final String description = LegacyComponentSerializer.legacy().serialize(WorldEditText.format(
+                TranslatableComponent.of("worldguard.command.region.remove.removing-region")
+                        .args(TextComponent.of(existing.getId()), TextComponent.of(world.getName())),
+                sender.getLocale()
+        ));
+
         AsyncCommandBuilder.wrap(task, sender)
                 .registerWithSupervisor(WorldGuard.getInstance().getSupervisor(), description)
-                .sendMessageAfterDelay("Please wait... removing region.")
-                .onSuccess((Component) null, removed -> sender.print(TextComponent.of(
-                        "Successfully removed " + removed.stream().map(ProtectedRegion::getId).collect(Collectors.joining(", ")) + ".",
-                        TextColor.LIGHT_PURPLE)))
-                .onFailure("Failed to remove region", WorldGuard.getInstance().getExceptionConverter())
-                .buildAndExec(WorldGuard.getInstance().getExecutorService());
+                .setDelayMessage(TranslatableComponent.of("worldguard.command.region.remove.delay-message"))
+                .onSuccess((Component) null, removed -> sender.print(TranslatableComponent.of(
+                        "worldguard.command.region.remove.success-remove",
+                        TextColor.LIGHT_PURPLE).args(TextComponent.of(removed.stream().map(ProtectedRegion::getId).collect(Collectors.joining(", "))))))
+                .onFailure(
+                        TranslatableComponent.of("worldguard.command.region.remove.failed-removing-region"),
+                        WorldGuard.getInstance().getExceptionConverter()
+                ).buildAndExec(WorldGuard.getInstance().getExecutorService());
     }
 
     /**
@@ -867,22 +1009,27 @@ public final class RegionCommands extends RegionCommandsBase {
 
         // Check permissions
         if (!getPermissionModel(sender).mayForceLoadRegions()) {
-            throw new CommandPermissionsException();
+            // TODO: if we use piston correctly, we can remove this.
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
         }
 
         if (world != null) {
             RegionManager manager = checkRegionManager(world);
 
-            if (manager == null) {
-                throw new CommandException("No region manager exists for world '" + world.getName() + "'.");
-            }
-
-            final String description = String.format("Loading region data for '%s'.", world.getName());
+            TranslatableComponent descriptionComponent = TranslatableComponent.of("worldguard.command.region.load.loading-region-data")
+                    .args(TextComponent.of(world.getName()));
+            final String description = LegacyComponentSerializer.legacy().serialize(WorldEditText.format(descriptionComponent, sender.getLocale()));
             AsyncCommandBuilder.wrap(new RegionManagerLoader(manager), sender)
                     .registerWithSupervisor(worldGuard.getSupervisor(), description)
-                    .sendMessageAfterDelay("Please wait... " + description)
-                    .onSuccess(String.format("Loaded region data for '%s'", world.getName()), null)
-                    .onFailure(String.format("Failed to load region data for '%s'", world.getName()), worldGuard.getExceptionConverter())
+                    .setDelayMessage(TranslatableComponent.of("worldguard.command.region.load.wait-for-loading")
+                            .args(descriptionComponent))
+                    .onSuccess(TranslatableComponent.of("worldguard.command.region.load.loaded-region-data")
+                            .args(TextComponent.of(world.getName())), null)
+                    .onFailure(TranslatableComponent.of("worldguard.command.region.load.failed-to-load-region-data")
+                            .args(TextComponent.of(world.getName())), worldGuard.getExceptionConverter())
                     .buildAndExec(worldGuard.getExecutorService());
         } else {
             // Load regions for all worlds
@@ -896,10 +1043,17 @@ public final class RegionCommands extends RegionCommandsBase {
             }
 
             AsyncCommandBuilder.wrap(new RegionManagerLoader(managers), sender)
-                    .registerWithSupervisor(worldGuard.getSupervisor(), "Loading regions for all worlds")
-                    .sendMessageAfterDelay("(Please wait... loading region data for all worlds...)")
-                    .onSuccess("Successfully load the region data for all worlds.", null)
-                    .onFailure("Failed to load regions for all worlds", worldGuard.getExceptionConverter())
+                    .registerWithSupervisor(worldGuard.getSupervisor(), LegacyComponentSerializer.legacy().serialize(
+                            WorldEditText.format(TranslatableComponent.of(
+                                            "worldguard.command.region.load.loading-all-world-region-data"),
+                                    sender.getLocale())))
+                    .setDelayMessage(
+                            TranslatableComponent.of("worldguard.command.region.load.loading-all-world-delay-message"))
+                    .onSuccess(TranslatableComponent.of("worldguard.command.region.load.loaded-all-world-regions"),
+                            null)
+                    .onFailure(
+                            TranslatableComponent.of("worldguard.command.region.load.failed-to-load-all-world-regions"),
+                            worldGuard.getExceptionConverter())
                     .buildAndExec(worldGuard.getExecutorService());
         }
     }
@@ -927,22 +1081,27 @@ public final class RegionCommands extends RegionCommandsBase {
 
         // Check permissions
         if (!getPermissionModel(sender).mayForceSaveRegions()) {
-            throw new CommandPermissionsException();
+            // TODO: if we use piston correctly, we can remove this.
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
         }
 
         if (world != null) {
             RegionManager manager = checkRegionManager(world);
 
-            if (manager == null) {
-                throw new CommandException("No region manager exists for world '" + world.getName() + "'.");
-            }
-
-            final String description = String.format("Saving region data for '%s'.", world.getName());
+            TranslatableComponent descriptionComponent = TranslatableComponent.of("worldguard.command.region.save.saving-region-data")
+                    .args(TextComponent.of(world.getName()));
+            final String description = LegacyComponentSerializer.legacy().serialize(WorldEditText.format(descriptionComponent, sender.getLocale()));
             AsyncCommandBuilder.wrap(new RegionManagerSaver(manager), sender)
                     .registerWithSupervisor(worldGuard.getSupervisor(), description)
-                    .sendMessageAfterDelay("Please wait... " + description)
-                    .onSuccess(String.format("Saving region data for '%s'", world.getName()), null)
-                    .onFailure(String.format("Failed to save region data for '%s'", world.getName()), worldGuard.getExceptionConverter())
+                    .setDelayMessage(TranslatableComponent.of("worldguard.command.region.save.wait-for-saving")
+                            .args(descriptionComponent))
+                    .onSuccess(TranslatableComponent.of("worldguard.command.region.save.saved-region-data")
+                            .args(TextComponent.of(world.getName())), null)
+                    .onFailure(TranslatableComponent.of("worldguard.command.region.save.failed-to-save-region-data")
+                            .args(TextComponent.of(world.getName())), worldGuard.getExceptionConverter())
                     .buildAndExec(worldGuard.getExecutorService());
         } else {
             // Save for all worlds
@@ -957,10 +1116,17 @@ public final class RegionCommands extends RegionCommandsBase {
             }
 
             AsyncCommandBuilder.wrap(new RegionManagerSaver(managers), sender)
-                    .registerWithSupervisor(worldGuard.getSupervisor(), "Saving regions for all worlds")
-                    .sendMessageAfterDelay("(Please wait... saving region data for all worlds...)")
-                    .onSuccess("Successfully saved the region data for all worlds.", null)
-                    .onFailure("Failed to save regions for all worlds", worldGuard.getExceptionConverter())
+                    .registerWithSupervisor(worldGuard.getSupervisor(), LegacyComponentSerializer.legacy().serialize(
+                            WorldEditText.format(TranslatableComponent.of(
+                                            "worldguard.command.region.save.saving-all-world-region-data"),
+                                    sender.getLocale())))
+                    .setDelayMessage(
+                            TranslatableComponent.of("worldguard.command.region.save.saving-all-world-delay-message"))
+                    .onSuccess(TranslatableComponent.of("worldguard.command.region.save.saved-all-world-regions"),
+                            null)
+                    .onFailure(
+                            TranslatableComponent.of("worldguard.command.region.save.failed-to-save-all-world-regions"),
+                            worldGuard.getExceptionConverter())
                     .buildAndExec(worldGuard.getExecutorService());
         }
     }
@@ -978,27 +1144,44 @@ public final class RegionCommands extends RegionCommandsBase {
     public void migrateDB(CommandContext args, Actor sender) throws CommandException {
         // Check permissions
         if (!getPermissionModel(sender).mayMigrateRegionStore()) {
-            throw new CommandPermissionsException();
+            // TODO: if we use piston correctly, we can remove this.
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
         }
 
         DriverType from = Enums.findFuzzyByValue(DriverType.class, args.getString(0));
         DriverType to = Enums.findFuzzyByValue(DriverType.class, args.getString(1));
 
         if (from == null) {
-            throw new CommandException("The value of 'from' is not a recognized type of region data database.");
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.command.region.migratedb.unrecognized-type-of-from-db"),
+                    ImmutableList.of()
+            );
         }
 
         if (to == null) {
-            throw new CommandException("The value of 'to' is not a recognized type of region region data database.");
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.command.region.migratedb.unrecognized-type-of-to-db"),
+                    ImmutableList.of()
+            );
         }
 
         if (from == to) {
-            throw new CommandException("It is not possible to migrate between the same types of region data databases.");
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.command.region.migratedb.same-type-of-db"),
+                    ImmutableList.of()
+            );
         }
 
         if (!args.hasFlag('y')) {
-            throw new CommandException("This command is potentially dangerous.\n" +
-                    "Please ensure you have made a backup of your data, and then re-enter the command with -y tacked on at the end to proceed.");
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.command.region.migratedb.ensure-backup-line1")
+                            .append(TextComponent.newline())
+                            .append(TranslatableComponent.of("worldguard.command.region.migratedb.ensure-backup-line2")),
+                    ImmutableList.of()
+            );
         }
 
         ConfigurationManager config = WorldGuard.getInstance().getPlatform().getGlobalStateManager();
@@ -1006,11 +1189,17 @@ public final class RegionCommands extends RegionCommandsBase {
         RegionDriver toDriver = config.regionStoreDriverMap.get(to);
 
         if (fromDriver == null) {
-            throw new CommandException("The driver specified as 'from' does not seem to be supported in your version of WorldGuard.");
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.command.region.migratedb.from-db-driver-not-supported"),
+                    ImmutableList.of()
+            );
         }
 
         if (toDriver == null) {
-            throw new CommandException("The driver specified as 'to' does not seem to be supported in your version of WorldGuard.");
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.command.region.migratedb.to-db-driver-not-supported"),
+                    ImmutableList.of()
+            );
         }
 
         DriverMigration migration = new DriverMigration(fromDriver, toDriver, WorldGuard.getInstance().getFlagRegistry());
@@ -1027,15 +1216,16 @@ public final class RegionCommands extends RegionCommandsBase {
 
         try {
             RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
-            sender.print("Now performing migration... this may take a while.");
+            sender.print(TranslatableComponent.of("worldguard.command.region.migratedb.performing"));
             container.migrate(migration);
-            sender.print(
-                    "Migration complete! This only migrated the data. If you already changed your settings to use " +
-                    "the target driver, then WorldGuard is now using the new data. If not, you have to adjust your " +
-                    "configuration to use the new driver and then restart your server.");
+            sender.print(TranslatableComponent.of("worldguard.command.region.migratedb.complete"));
         } catch (MigrationException e) {
             log.log(Level.WARNING, "Failed to migrate", e);
-            throw new CommandException("Error encountered while migrating: " + e.getMessage());
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.command.region.migratedb.error")
+                            .args(TextComponent.of(e.getMessage())),
+                    ImmutableList.of()
+            );
         } finally {
             if (minecraftLogger != null) {
                 minecraftLogger.removeHandler(handler);
@@ -1055,7 +1245,11 @@ public final class RegionCommands extends RegionCommandsBase {
     public void migrateUuid(CommandContext args, Actor sender) throws CommandException {
         // Check permissions
         if (!getPermissionModel(sender).mayMigrateRegionNames()) {
-            throw new CommandPermissionsException();
+            // TODO: if we use piston correctly, we can remove this.
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
         }
 
         LoggerToChatHandler handler = null;
@@ -1074,12 +1268,16 @@ public final class RegionCommands extends RegionCommandsBase {
             RegionDriver driver = container.getDriver();
             UUIDMigration migration = new UUIDMigration(driver, WorldGuard.getInstance().getProfileService(), WorldGuard.getInstance().getFlagRegistry());
             migration.setKeepUnresolvedNames(config.keepUnresolvedNames);
-            sender.print("Now performing migration... this may take a while.");
+            sender.print(TranslatableComponent.of("worldguard.command.region.migrateuuid.performing"));
             container.migrate(migration);
-            sender.print("Migration complete!");
+            sender.print(TranslatableComponent.of("worldguard.command.region.migrateuuid.complete"));
         } catch (MigrationException e) {
             log.log(Level.WARNING, "Failed to migrate", e);
-            throw new CommandException("Error encountered while migrating: " + e.getMessage());
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.command.region.migrateuuid.error")
+                            .args(TextComponent.of(e.getMessage())),
+                    ImmutableList.of()
+            );
         } finally {
             if (minecraftLogger != null) {
                 minecraftLogger.removeHandler(handler);
@@ -1102,12 +1300,20 @@ public final class RegionCommands extends RegionCommandsBase {
     public void migrateHeights(CommandContext args, Actor sender) throws CommandException {
         // Check permissions
         if (!getPermissionModel(sender).mayMigrateRegionHeights()) {
-            throw new CommandPermissionsException();
+            // TODO: if we use piston correctly, we can remove this.
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
         }
 
         if (!args.hasFlag('y')) {
-            throw new CommandException("This command is potentially dangerous.\n" +
-                    "Please ensure you have made a backup of your data, and then re-enter the command with -y tacked on at the end to proceed.");
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.command.region.migrateheights.ensure-backup-line1")
+                            .append(TextComponent.newline())
+                            .append(TranslatableComponent.of("worldguard.command.region.migrateheights.ensure-backup-line2")),
+                    ImmutableList.of()
+            );
         }
 
         World world = null;
@@ -1131,10 +1337,14 @@ public final class RegionCommands extends RegionCommandsBase {
             RegionDriver driver = container.getDriver();
             WorldHeightMigration migration = new WorldHeightMigration(driver, WorldGuard.getInstance().getFlagRegistry(), world);
             container.migrate(migration);
-            sender.print("Migration complete!");
+            sender.print(TranslatableComponent.of("worldguard.command.region.migrateheights.complete"));
         } catch (MigrationException e) {
             log.log(Level.WARNING, "Failed to migrate", e);
-            throw new CommandException("Error encountered while migrating: " + e.getMessage());
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.command.region.migrateheights.error")
+                            .args(TextComponent.of(e.getMessage())),
+                    ImmutableList.of()
+            );
         } finally {
             if (minecraftLogger != null) {
                 minecraftLogger.removeHandler(handler);
@@ -1166,7 +1376,11 @@ public final class RegionCommands extends RegionCommandsBase {
 
         // Check permissions
         if (!getPermissionModel(player).mayTeleportTo(existing)) {
-            throw new CommandPermissionsException();
+            // TODO: if we use piston correctly, we can remove this.
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
         }
 
         // -s for spawn location
@@ -1175,16 +1389,25 @@ public final class RegionCommands extends RegionCommandsBase {
             
             if (teleportLocation == null) {
                 throw new CommandException(
-                        "The region has no spawn point associated.");
+                        TranslatableComponent.of("worldguard.command.region.teleport.no-spawn-point"),
+                        ImmutableList.of()
+                );
             }
         } else if (args.hasFlag('c')) {
             // Check permissions
             if (!getPermissionModel(player).mayTeleportToCenter(existing)) {
-                throw new CommandPermissionsException();
+                // TODO: if we use piston correctly, we can remove this.
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.error.command.no-permission"),
+                        ImmutableList.of()
+                );
             }
             Region region = WorldEditRegionConverter.convertToRegion(existing);
             if (region == null || region.getCenter() == null) {
-                throw new CommandException("The region has no center point.");
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.command.region.teleport.no-center-point"),
+                        ImmutableList.of()
+                );
             }
             if (player.getGameMode() == GameModes.SPECTATOR) {
                 teleportLocation = new Location(world, region.getCenter(), 0, 0);
@@ -1192,13 +1415,19 @@ public final class RegionCommands extends RegionCommandsBase {
                 // TODO: Add some method to create a safe teleport location.
                 // The method AbstractPlayerActor$findFreePoisition(Location loc) is no good way for this.
                 // It doesn't return the found location and it can't be checked if the location is inside the region.
-                throw new CommandException("Center teleport is only available in Spectator gamemode.");
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.command.region.teleport.center-spectator-warning"),
+                        ImmutableList.of()
+                );
             }
         } else {
             teleportLocation = FlagValueCalculator.getEffectiveFlagOf(existing, Flags.TELE_LOC, player);
             
             if (teleportLocation == null) {
-                throw new CommandException("The region has no teleport point associated.");
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.command.region.teleport.no-teleport-point"),
+                        ImmutableList.of()
+                );
             }
         }
 
@@ -1210,9 +1439,13 @@ public final class RegionCommands extends RegionCommandsBase {
             message = Flags.TELE_MESSAGE.getDefault();
         }
 
+        TranslatableComponent failMessage = TranslatableComponent.of(
+                "worldguard.command.region.teleport.unable-to-teleport"
+        ).args(TextComponent.of(existing.getId()));
+
         player.teleport(teleportLocation,
                 message.replace("%id%", existing.getId()),
-                "Unable to teleport to region '" + existing.getId() + "'.");
+                LegacyComponentSerializer.legacy().serialize(WorldEditText.format(failMessage, sender.getLocale())));
     }
 
     @Command(aliases = {"toggle-bypass", "bypass"},
@@ -1221,14 +1454,21 @@ public final class RegionCommands extends RegionCommandsBase {
     public void toggleBypass(CommandContext args, Actor sender) throws CommandException {
         LocalPlayer player = worldGuard.checkPlayer(sender);
         if (!player.hasPermission("worldguard.region.toggle-bypass")) {
-            throw new CommandPermissionsException();
+            // TODO: if we use piston correctly, we can remove this.
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
         }
         Session session = WorldGuard.getInstance().getPlatform().getSessionManager().get(player);
         boolean shouldEnableBypass;
         if (args.argsLength() > 0) {
             String arg1 = args.getString(0);
             if (!arg1.equalsIgnoreCase("on") && !arg1.equalsIgnoreCase("off")) {
-                throw new CommandException("Allowed optional arguments are: on, off");
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.command.region.toggle-bypass.on-or-off"),
+                        ImmutableList.of()
+                );
             }
             shouldEnableBypass = arg1.equalsIgnoreCase("on");
         } else {
@@ -1236,10 +1476,10 @@ public final class RegionCommands extends RegionCommandsBase {
         }
         if (shouldEnableBypass) {
             session.setBypassDisabled(false);
-            player.print("You are now bypassing region protection (as long as you have permission).");
+            player.print(TranslatableComponent.of("worldguard.command.region.toggle-bypass.now-bypassing"));
         } else {
             session.setBypassDisabled(true);
-            player.print("You are no longer bypassing region protection.");
+            player.print(TranslatableComponent.of("worldguard.command.region.toggle-bypass.no-longer-bypassing"));
         }
     }
 
@@ -1279,9 +1519,10 @@ public final class RegionCommands extends RegionCommandsBase {
 
             Collections.sort(flagList);
 
-            final TextComponent.Builder builder = TextComponent.builder("Available flags: ");
+            final TranslatableComponent.Builder builder =
+                    TranslatableComponent.builder("worldguard.command.region.flag.flag-list.Click-to-set");
 
-            final HoverEvent clickToSet = HoverEvent.of(HoverEvent.Action.SHOW_TEXT, TextComponent.of("Click to set"));
+            final HoverEvent clickToSet = HoverEvent.of(HoverEvent.Action.SHOW_TEXT, TranslatableComponent.of("worldguard.command.region.flag.flag-list.Click-to-set"));
             for (int i = 0; i < flagList.size(); i++) {
                 String flag = flagList.get(i);
 
@@ -1292,14 +1533,14 @@ public final class RegionCommands extends RegionCommandsBase {
                     builder.append(TextComponent.of(", "));
                 }
             }
-
-            Component ret = ErrorFormat.wrap("Unknown flag specified: " + flagName)
+            Component ret = TextComponent.builder().color(TextColor.RED)
+                    .append(TranslatableComponent.of("worldguard.command.region.flag.flag-list.unknown-flag-specified", TextColor.RED)
+                            .args(TextComponent.of(flagName))).build()
                     .append(TextComponent.newline())
                     .append(builder.build());
             if (sender.isPlayer()) {
-                return ret.append(TextComponent.of("Or use the command ", TextColor.LIGHT_PURPLE)
-                                .append(TextComponent.of("/rg flags " + regionId, TextColor.AQUA)
-                                    .clickEvent(ClickEvent.of(ClickEvent.Action.RUN_COMMAND,
+                return ret.append(TranslatableComponent.of("worldguard.command.region.flag.flag-list.or-use-command", TextColor.LIGHT_PURPLE).args(TextComponent.of("/rg flags " + regionId, TextColor.AQUA)
+                                .clickEvent(ClickEvent.of(ClickEvent.Action.RUN_COMMAND,
                                         "/rg flags -w \"" + world.getName() + "\" " + regionId))));
             }
             return ret;

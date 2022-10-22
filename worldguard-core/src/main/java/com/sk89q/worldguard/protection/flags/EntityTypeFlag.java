@@ -19,6 +19,8 @@
 
 package com.sk89q.worldguard.protection.flags;
 
+import com.sk89q.worldedit.util.formatting.text.TextComponent;
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldedit.world.entity.EntityType;
 import com.sk89q.worldedit.world.entity.EntityTypes;
 
@@ -45,7 +47,10 @@ public class EntityTypeFlag extends Flag<EntityType> {
         input = input.trim();
         EntityType entityType = unmarshal(input);
         if (entityType == null) {
-            throw new InvalidFlagFormat("Unknown entity type: " + input);
+            throw new InvalidFlagFormat(
+                    TranslatableComponent.of("worldguard.error.flag.entity-type-flag.unknown-entity-type")
+                            .args(TextComponent.of(input))
+            );
         }
         return entityType;
     }

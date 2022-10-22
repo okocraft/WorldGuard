@@ -19,6 +19,10 @@
 
 package com.sk89q.worldguard.commands.region;
 
+import com.sk89q.worldedit.util.formatting.WorldEditText;
+import com.sk89q.worldedit.util.formatting.text.Component;
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
+import com.sk89q.worldedit.util.formatting.text.serializer.legacy.LegacyComponentSerializer;
 import com.sk89q.worldguard.protection.flags.registry.UnknownFlag;
 import com.sk89q.worldguard.util.profile.cache.ProfileCache;
 import com.sk89q.worldedit.extension.platform.Actor;
@@ -87,16 +91,14 @@ public class RegionPrintoutBuilder implements Callable<TextComponent> {
      * Add region name, type, and priority.
      */
     public void appendBasics() {
-        builder.append(TextComponent.of("Region: ", TextColor.BLUE));
+        builder.append(TranslatableComponent.of("worldguard.command.region.info.region", TextColor.BLUE));
         builder.append(TextComponent.of(region.getId(), TextColor.YELLOW)
                 .clickEvent(ClickEvent.of(ClickEvent.Action.RUN_COMMAND, "/rg info -w \"" + world + "\" " + region.getId())));
-        
-        builder.append(TextComponent.of(" (type=", TextColor.GRAY));
-        builder.append(TextComponent.of(region.getType().getName()));
-        
-        builder.append(TextComponent.of(", priority=", TextColor.GRAY));
-        appendPriorityComponent(region);
-        builder.append(TextComponent.of(")", TextColor.GRAY));
+        builder.append(TextComponent.space());
+        builder.append(
+                TranslatableComponent.of("worldguard.command.region.info.type-priority", TextColor.GRAY)
+                        .args(TextComponent.of(region.getType().getName()), getPriorityComponent(region))
+        );
 
         newline();
     }
@@ -105,7 +107,7 @@ public class RegionPrintoutBuilder implements Callable<TextComponent> {
      * Add information about flags.
      */
     public void appendFlags() {
-        builder.append(TextComponent.of("Flags: ", TextColor.BLUE));
+        builder.append(TranslatableComponent.of("worldguard.command.region.info.flag", TextColor.BLUE));
         
         appendFlagsList(true);
         
@@ -118,8 +120,13 @@ public class RegionPrintoutBuilder implements Callable<TextComponent> {
      * @param useColors true to use colors
      */
     public void appendFlagsList(boolean useColors) {
+        builder.append(getFlagsList(useColors));
+    }
+
+    public Component getFlagsList(boolean useColors) {
+        TextComponent.Builder builder = TextComponent.builder();
         boolean hasFlags = false;
-        
+
         for (Flag<?> flag : WorldGuard.getInstance().getFlagRegistry()) {
             Object val = region.getFlag(flag);
 
@@ -163,7 +170,7 @@ public class RegionPrintoutBuilder implements Callable<TextComponent> {
             TextComponent flagText = TextComponent.of(flagString, flagColor)
                     .append(TextComponent.of(String.valueOf(val), useColors ? TextColor.YELLOW : TextColor.WHITE));
             if (perms != null && perms.maySetFlag(region, flag)) {
-                flagText = flagText.hoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, TextComponent.of("Click to set flag")))
+                flagText = flagText.hoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, TranslatableComponent.of("worldguard.command.region.info.flag.click-to-set")))
                         .clickEvent(ClickEvent.of(ClickEvent.Action.SUGGEST_COMMAND,
                                 "/rg flag -w \"" + world + "\" " + region.getId() + " " + flag.getName() + " "));
             }
@@ -173,16 +180,17 @@ public class RegionPrintoutBuilder implements Callable<TextComponent> {
         }
 
         if (!hasFlags) {
-            TextComponent noFlags = TextComponent.of("(none)", useColors ? TextColor.RED : TextColor.WHITE);
+            TranslatableComponent noFlags = TranslatableComponent.of("worldguard.command.region.info.flag.none", useColors ? TextColor.RED : TextColor.WHITE);
             builder.append(noFlags);
         }
 
         if (perms != null && perms.maySetFlag(region)) {
             builder.append(TextComponent.space())
-                    .append(TextComponent.of("[Flags]", useColors ? TextColor.GREEN : TextColor.GRAY)
-                    .hoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, TextComponent.of("Click to set a flag")))
+                    .append(TranslatableComponent.of("worldguard.command.region.info.flag.bracket-flags", useColors ? TextColor.GREEN : TextColor.GRAY)
+                    .hoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, TranslatableComponent.of("worldguard.command.region.info.flag.click-to-set")))
                     .clickEvent(ClickEvent.of(ClickEvent.Action.RUN_COMMAND, "/rg flags -w \"" + world + "\" " + region.getId())));
         }
+        return builder.build();
     }
 
     /**
@@ -198,10 +206,18 @@ public class RegionPrintoutBuilder implements Callable<TextComponent> {
      * @param useColors true to use colors
      */
     public void appendParentTree(boolean useColors) {
-        if (region.getParent() == null) {
-            return;
+        Component parentTree = getParentTree(useColors);
+        if (parentTree != null) {
+            builder.append(parentTree);
         }
-        
+    }
+
+    public Component getParentTree(boolean useColors) {
+        TextComponent.Builder builder = TextComponent.builder();
+        if (region.getParent() == null) {
+            return null;
+        }
+
         List<ProtectedRegion> inheritance = new ArrayList<>();
 
         ProtectedRegion r = region;
@@ -220,7 +236,7 @@ public class RegionPrintoutBuilder implements Callable<TextComponent> {
             ProtectedRegion cur = it.previous();
 
             StringBuilder namePrefix = new StringBuilder();
-            
+
             // Put symbol for child
             if (indent != 0) {
                 for (int i = 0; i < indent; i++) {
@@ -233,22 +249,23 @@ public class RegionPrintoutBuilder implements Callable<TextComponent> {
             builder.append(TextComponent.of(namePrefix.toString(), useColors ? TextColor.GREEN : TextColor.WHITE));
             if (perms != null && perms.mayLookup(cur)) {
                 builder.append(TextComponent.of(cur.getId(), useColors ? TextColor.GREEN : TextColor.WHITE)
-                    .hoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, TextComponent.of("Click for info")))
+                    .hoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, TranslatableComponent.of("worldguard.command.region.info.flag.click-for-info")))
                     .clickEvent(ClickEvent.of(ClickEvent.Action.RUN_COMMAND, "/rg info -w \"" + world + "\" " + cur.getId())));
             } else {
                 builder.append(TextComponent.of(cur.getId(), useColors ? TextColor.GREEN : TextColor.WHITE));
             }
-            
+
             // Put (parent)
             if (!cur.equals(region)) {
-                builder.append(TextComponent.of(" (parent, priority=", useColors ? TextColor.GRAY : TextColor.WHITE));
-                appendPriorityComponent(cur);
-                builder.append(TextComponent.of(")", useColors ? TextColor.GRAY : TextColor.WHITE));
+                builder.append(TextComponent.space());
+
+                builder.append(TranslatableComponent.of("worldguard.command.region.info.parent", useColors ? TextColor.GRAY : TextColor.WHITE)
+                        .args(getPriorityComponent(cur)));
             }
             if (last != null && cur.equals(region) && perms != null && perms.maySetParent(cur, last)) {
                 builder.append(TextComponent.space());
                 builder.append(TextComponent.of("[X]", TextColor.RED)
-                        .hoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, TextComponent.of("Click to unlink parent")))
+                        .hoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, TranslatableComponent.of("worldguard.command.region.info.parent.click-to-unlink")))
                         .clickEvent(ClickEvent.of(ClickEvent.Action.SUGGEST_COMMAND, "/rg setparent -w \"" + world + "\" " + cur.getId())));
             }
 
@@ -256,19 +273,20 @@ public class RegionPrintoutBuilder implements Callable<TextComponent> {
             indent++;
             newline();
         }
+        return builder.build();
     }
 
     /**
      * Add information about members.
      */
     public void appendDomain() {
-        builder.append(TextComponent.of("Owners: ", TextColor.BLUE));
+        builder.append(TranslatableComponent.of("worldguard.command.region.info.domain.owner", TextColor.BLUE));
         addDomainString(region.getOwners(),
                 perms != null && perms.mayAddOwners(region) ? "addowner" : null,
                 perms != null && perms.mayRemoveOwners(region) ? "removeowner" : null);
         newline();
 
-        builder.append(TextComponent.of("Members: ", TextColor.BLUE));
+        builder.append(TranslatableComponent.of("worldguard.command.region.info.domain.member", TextColor.BLUE));
         addDomainString(region.getMembers(),
                 perms != null && perms.mayAddMembers(region) ? "addmember" : null,
                 perms != null && perms.mayRemoveMembers(region) ? "removemember" : null);
@@ -277,7 +295,7 @@ public class RegionPrintoutBuilder implements Callable<TextComponent> {
 
     private void addDomainString(DefaultDomain domain, String addCommand, String removeCommand) {
         if (domain.size() == 0) {
-            builder.append(ErrorFormat.wrap("(none)"));
+            builder.append(TranslatableComponent.of("worldguard.command.region.info.domain.none", TextColor.RED));
         } else {
             if (perms != null) {
                 builder.append(domain.toUserFriendlyComponent(cache));
@@ -286,18 +304,18 @@ public class RegionPrintoutBuilder implements Callable<TextComponent> {
             }
         }
         if (addCommand != null) {
-            builder.append(TextComponent.space().append(TextComponent.of("[Add]", TextColor.GREEN)
-                            .hoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, TextComponent.of("Click to add a player or group")))
+            builder.append(TextComponent.space().append(TranslatableComponent.of("worldguard.command.region.info.domain.bracket-add", TextColor.GREEN)
+                            .hoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, TranslatableComponent.of("worldguard.command.region.info.domain.click-to-add")))
                             .clickEvent(ClickEvent.of(ClickEvent.Action.SUGGEST_COMMAND,
                                     "/rg " + addCommand + " -w \"" + world + "\" " + region.getId() + " "))));
         }
         if (removeCommand != null && domain.size() > 0) {
             builder.append(TextComponent.space().append(TextComponent.of("[Rem]", TextColor.RED)
-                    .hoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, TextComponent.of("Click to remove a player or group")))
+                    .hoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, TranslatableComponent.of("worldguard.command.region.info.domain.click-to-remove")))
                     .clickEvent(ClickEvent.of(ClickEvent.Action.SUGGEST_COMMAND,
                             "/rg " + removeCommand + " -w \"" + world + "\" " + region.getId() + " "))));
             builder.append(TextComponent.space().append(TextComponent.of("[Clr]", TextColor.RED)
-                    .hoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, TextComponent.of("Click to clear")))
+                    .hoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, TranslatableComponent.of("worldguard.command.region.info.domain.click-to-clear")))
                     .clickEvent(ClickEvent.of(ClickEvent.Action.SUGGEST_COMMAND,
                             "/rg " + removeCommand + " -w \"" + world + "\" -a " + region.getId()))));
         }
@@ -313,24 +331,24 @@ public class RegionPrintoutBuilder implements Callable<TextComponent> {
         TextComponent bound = TextComponent.of(" " + min + " -> " + max, TextColor.YELLOW);
         if (perms != null && perms.maySelect(region)) {
             bound = bound
-                    .hoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, TextComponent.of("Click to select")))
+                    .hoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, TranslatableComponent.of("worldguard.command.region.info.bounds.click-to-select")))
                     .clickEvent(ClickEvent.of(ClickEvent.Action.RUN_COMMAND, "/rg select " + region.getId()));
         }
         builder.append(bound);
         final Location teleFlag = FlagValueCalculator.getEffectiveFlagOf(region, Flags.TELE_LOC, perms != null && perms.getSender() instanceof RegionAssociable ? (RegionAssociable) perms.getSender() : null);
         if (teleFlag != null && perms != null && perms.mayTeleportTo(region)) {
-            builder.append(TextComponent.space().append(TextComponent.of("[Teleport]", TextColor.GRAY)
+            builder.append(TextComponent.space().append(TranslatableComponent.of("worldguard.command.region.info.bounds.bracket-teleport", TextColor.GRAY)
                     .hoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT,
-                            TextComponent.of("Click to teleport").append(TextComponent.newline()).append(
+                            TranslatableComponent.of("worldguard.command.region.info.bounds.click-to-teleport").append(TextComponent.newline()).append(
                                     TextComponent.of(teleFlag.getBlockX() + ", "
                                             + teleFlag.getBlockY() + ", "
                                             + teleFlag.getBlockZ()))))
                     .clickEvent(ClickEvent.of(ClickEvent.Action.RUN_COMMAND,
                             "/rg tp -w \"" + world + "\" " + region.getId()))));
         } else if (perms != null && perms.mayTeleportToCenter(region) && region.isPhysicalArea()) {
-            builder.append(TextComponent.space().append(TextComponent.of("[Center Teleport]", TextColor.GRAY)
+            builder.append(TextComponent.space().append(TranslatableComponent.of("worldguard.command.region.info.bounds.bracket-center-teleport", TextColor.GRAY)
                     .hoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT,
-                            TextComponent.of("Click to teleport to the center of the region")))
+                            TranslatableComponent.of("worldguard.command.region.info.bounds.click-to-teleport-center")))
                     .clickEvent(ClickEvent.of(ClickEvent.Action.RUN_COMMAND,
                             "/rg tp -c -w \"" + world + "\" " + region.getId()))));
         }
@@ -339,13 +357,17 @@ public class RegionPrintoutBuilder implements Callable<TextComponent> {
     }
 
     private void appendPriorityComponent(ProtectedRegion rg) {
+        builder.append(getPriorityComponent(rg));
+    }
+
+    private Component getPriorityComponent(ProtectedRegion rg) {
         final String content = String.valueOf(rg.getPriority());
         if (perms != null && perms.maySetPriority(rg)) {
-            builder.append(TextComponent.of(content, TextColor.GOLD)
-                    .hoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, TextComponent.of("Click to change")))
-                    .clickEvent(ClickEvent.of(ClickEvent.Action.SUGGEST_COMMAND, "/rg setpriority -w \"" + world + "\" " + rg.getId() + " ")));
+            return TextComponent.of(content, TextColor.GOLD)
+                    .hoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, TranslatableComponent.of("worldguard.command.region.info.click-to-change-priority")))
+                    .clickEvent(ClickEvent.of(ClickEvent.Action.SUGGEST_COMMAND, "/rg setpriority -w \"" + world + "\" " + rg.getId() + " "));
         } else {
-            builder.append(TextComponent.of(content, TextColor.WHITE));
+            return TextComponent.of(content, TextColor.WHITE);
         }
     }
 
@@ -357,7 +379,7 @@ public class RegionPrintoutBuilder implements Callable<TextComponent> {
         appendBounds();
 
         if (cache != null && perms == null) {
-            builder.append(SubtleFormat.wrap("Any names suffixed by * are 'last seen names' and may not be up to date."));
+            builder.append(TranslatableComponent.of("worldguard.command.region.info.about-star-suffixed"));
         }
     }
 
@@ -383,6 +405,14 @@ public class RegionPrintoutBuilder implements Callable<TextComponent> {
 
     public TextComponentProducer append(TextComponent component) {
         return builder.append(component);
+    }
+
+    public TextComponentProducer append(Component component) {
+        if (component instanceof TextComponent) {
+            return append(((TextComponent) component));
+        } else {
+            return append(TextComponent.empty().append(component));
+        }
     }
 
     public TextComponent toComponent() {

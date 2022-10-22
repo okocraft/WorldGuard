@@ -19,11 +19,27 @@
 
 package com.sk89q.worldguard.protection.flags;
 
+import com.sk89q.worldedit.util.formatting.text.Component;
+import com.sk89q.worldedit.util.formatting.text.TextComponent;
+import com.sk89q.worldedit.util.formatting.text.serializer.plain.PlainComponentSerializer;
+
 public class InvalidFlagFormat extends Exception {
     
     private static final long serialVersionUID = 8101615074524004172L;
 
+    private final Component richMessage;
+
     public InvalidFlagFormat(String msg) {
         super(msg);
+        this.richMessage = TextComponent.of(msg);
+    }
+
+    public InvalidFlagFormat(Component msg) {
+        super(PlainComponentSerializer.INSTANCE.serialize(msg));
+        this.richMessage = msg;
+    }
+
+    public Component getRichMessage() {
+        return this.richMessage;
     }
 }

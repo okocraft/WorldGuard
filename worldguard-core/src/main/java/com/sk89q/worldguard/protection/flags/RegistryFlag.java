@@ -22,6 +22,8 @@ package com.sk89q.worldguard.protection.flags;
 import com.sk89q.worldedit.registry.Keyed;
 import com.sk89q.worldedit.registry.Registry;
 
+import com.sk89q.worldedit.util.formatting.text.TextComponent;
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import javax.annotation.Nullable;
 import java.util.Locale;
 import java.util.Optional;
@@ -47,7 +49,10 @@ public class RegistryFlag<T extends Keyed> extends Flag<T> {
     public T parseInput(FlagContext context) throws InvalidFlagFormat {
         final String key = context.getUserInput().trim().toLowerCase(Locale.ROOT);
         return Optional.ofNullable(registry.get(key))
-                .orElseThrow(() -> new InvalidFlagFormat("Unknown " + registry.getName() + ": " + key));
+                .orElseThrow(() -> new InvalidFlagFormat(
+                        TranslatableComponent.of("worldguard.error.flag.registry-flag.unknown-registry")
+                                .args(TextComponent.of(registry.getName()), TextComponent.of(key))
+                ));
     }
 
     public Registry<T> getRegistry() {

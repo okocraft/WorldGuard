@@ -19,6 +19,7 @@
 
 package com.sk89q.worldguard.protection.flags;
 
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldedit.world.weather.WeatherType;
 import com.sk89q.worldedit.world.weather.WeatherTypes;
 
@@ -45,7 +46,10 @@ public class WeatherTypeFlag extends Flag<WeatherType> {
         input = input.trim();
         WeatherType weatherType = unmarshal(input);
         if (weatherType == null) {
-            throw new InvalidFlagFormat("Unknown weather type: " + input);
+            throw new InvalidFlagFormat(
+                    TranslatableComponent.of("worldguard.error.flag.weather-type-flag.unknown-weather-type")
+                            .args(TranslatableComponent.of(input))
+            );
         }
         return weatherType;
     }

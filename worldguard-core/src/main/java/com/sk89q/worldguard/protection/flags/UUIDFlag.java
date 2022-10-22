@@ -19,6 +19,8 @@
 
 package com.sk89q.worldguard.protection.flags;
 
+import com.sk89q.worldedit.util.formatting.text.TextComponent;
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import javax.annotation.Nullable;
 import java.util.UUID;
 
@@ -41,7 +43,10 @@ public class UUIDFlag extends Flag<UUID> {
         try {
             return UUID.fromString(input);
         } catch (IllegalArgumentException e) {
-            throw new InvalidFlagFormat("Not a valid uuid: " + input);
+            throw new InvalidFlagFormat(
+                    TranslatableComponent.of("worldguard.error.flag.uuid-flag.invalid-uuid")
+                            .args(TextComponent.of(input))
+            );
         }
     }
 

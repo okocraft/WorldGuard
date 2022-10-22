@@ -21,6 +21,8 @@ package com.sk89q.worldguard.protection.flags;
 
 import com.google.common.collect.Maps;
 import com.sk89q.worldedit.extension.platform.Actor;
+import com.sk89q.worldedit.util.formatting.text.TextComponent;
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.WorldGuard;
 
@@ -67,7 +69,7 @@ public final class FlagContext {
         if (sender.isPlayer() && sender instanceof LocalPlayer) {
             return (LocalPlayer) sender;
         } else {
-            throw new InvalidFlagFormat("Not a player");
+            throw new InvalidFlagFormat(TranslatableComponent.of("worldguard.error.flag.not-a-player"));
         }
     }
 
@@ -75,7 +77,10 @@ public final class FlagContext {
         try {
             return Integer.parseInt(input);
         } catch (NumberFormatException e) {
-            throw new InvalidFlagFormat("Not a number: " + input);
+            throw new InvalidFlagFormat(
+                    TranslatableComponent.of("worldguard.error.flag.not-a-number")
+                            .args(TextComponent.of(input))
+            );
         }
     }
 
@@ -83,7 +88,10 @@ public final class FlagContext {
         try {
             return Double.parseDouble(input);
         } catch (NumberFormatException e) {
-            throw new InvalidFlagFormat("Not a number: " + input);
+            throw new InvalidFlagFormat(
+                    TranslatableComponent.of("worldguard.error.flag.not-a-number")
+                            .args(TextComponent.of(input))
+            );
         }
     }
 
