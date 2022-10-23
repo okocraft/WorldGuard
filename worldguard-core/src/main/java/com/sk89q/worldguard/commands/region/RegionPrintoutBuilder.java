@@ -271,7 +271,7 @@ public class RegionPrintoutBuilder implements Callable<TextComponent> {
 
             last = cur;
             indent++;
-            newline();
+            builder.append(TextComponent.newline());
         }
         return builder.build();
     }
@@ -310,11 +310,11 @@ public class RegionPrintoutBuilder implements Callable<TextComponent> {
                                     "/rg " + addCommand + " -w \"" + world + "\" " + region.getId() + " "))));
         }
         if (removeCommand != null && domain.size() > 0) {
-            builder.append(TextComponent.space().append(TextComponent.of("[Rem]", TextColor.RED)
+            builder.append(TextComponent.space().append(TranslatableComponent.of("worldguard.command.region.info.domain.bracket-rem", TextColor.RED)
                     .hoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, TranslatableComponent.of("worldguard.command.region.info.domain.click-to-remove")))
                     .clickEvent(ClickEvent.of(ClickEvent.Action.SUGGEST_COMMAND,
                             "/rg " + removeCommand + " -w \"" + world + "\" " + region.getId() + " "))));
-            builder.append(TextComponent.space().append(TextComponent.of("[Clr]", TextColor.RED)
+            builder.append(TextComponent.space().append(TranslatableComponent.of("worldguard.command.region.info.domain.bracket-clr", TextColor.RED)
                     .hoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, TranslatableComponent.of("worldguard.command.region.info.domain.click-to-clear")))
                     .clickEvent(ClickEvent.of(ClickEvent.Action.SUGGEST_COMMAND,
                             "/rg " + removeCommand + " -w \"" + world + "\" -a " + region.getId()))));
@@ -327,7 +327,7 @@ public class RegionPrintoutBuilder implements Callable<TextComponent> {
     public void appendBounds() {
         BlockVector3 min = region.getMinimumPoint();
         BlockVector3 max = region.getMaximumPoint();
-        builder.append(TextComponent.of("Bounds:", TextColor.BLUE));
+        builder.append(TranslatableComponent.of("worldguard.command.region.info.bounds", TextColor.BLUE));
         TextComponent bound = TextComponent.of(" " + min + " -> " + max, TextColor.YELLOW);
         if (perms != null && perms.maySelect(region)) {
             bound = bound
