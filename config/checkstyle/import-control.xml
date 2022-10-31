@@ -17,19 +17,12 @@
     <allow pkg="org.flywaydb"/>
     <allow pkg="org.yaml"/>
     <allow pkg="org.enginehub.piston"/>
+    <allow pkg="com.google.gson"/>
 
-    <subpackage name="util">
-
-      <subpackage name="translation">
-        <allow pkg="com.google.gson"/>
-      </subpackage>
-
-      <subpackage name="profile.resolver">
-        <allow pkg="org.bukkit"/>
-        <allow pkg="io.papermc.lib"/>
-        <allow pkg="com.destroystokyo.paper"/>
-      </subpackage>
-
+    <subpackage name="util.profile.resolver">
+      <allow pkg="org.bukkit"/>
+      <allow pkg="io.papermc.lib"/>
+      <allow pkg="com.destroystokyo.paper"/>
     </subpackage>
 
     <subpackage name="bukkit">
@@ -42,7 +35,6 @@
       <allow pkg="co.aikar.timings.lib" />
       <allow pkg="org.spigotmc" />
     </subpackage>
-
   </subpackage>
 
 </import-control>
