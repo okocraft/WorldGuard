@@ -20,6 +20,7 @@
 package com.sk89q.worldguard.bukkit.listener;
 
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.util.formatting.text.Component;
 import com.sk89q.worldedit.util.formatting.text.TextComponent;
 import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldedit.world.gamemode.GameMode;
@@ -148,8 +149,9 @@ public class WorldGuardPlayerListener extends AbstractListener {
             ApplicableRegionSet chatFrom = query.getApplicableRegions(localPlayer.getLocation());
 
             if (!chatFrom.testState(localPlayer, Flags.SEND_CHAT)) {
-                String message = chatFrom.queryValue(localPlayer, Flags.DENY_MESSAGE);
-                RegionProtectionListener.formatAndSendDenyMessage("chat", localPlayer, message);
+                Component message = chatFrom.queryValue(localPlayer, Flags.DENY_MESSAGE_COMPONENT);
+                TranslatableComponent what = TranslatableComponent.of("worldguard.error.denied.what.chat");
+                RegionProtectionListener.formatAndSendDenyMessage(what, localPlayer, message);
                 event.setCancelled(true);
                 return;
             }
@@ -425,8 +427,11 @@ public class WorldGuardPlayerListener extends AbstractListener {
             CommandFilter test = new CommandFilter(allowedCommands, blockedCommands);
 
             if (!test.apply(event.getMessage())) {
-                String message = set.queryValue(localPlayer, Flags.DENY_MESSAGE);
-                RegionProtectionListener.formatAndSendDenyMessage("use " + event.getMessage(), localPlayer, message);
+                Component message = set.queryValue(localPlayer, Flags.DENY_MESSAGE_COMPONENT);
+                TranslatableComponent what = TranslatableComponent.of("worldguard.error.denied.what.use-command")
+                        .args(TextComponent.of(event.getMessage()));
+
+                RegionProtectionListener.formatAndSendDenyMessage(what, localPlayer, message);
                 event.setCancelled(true);
                 return;
             }
