@@ -21,7 +21,13 @@ package com.sk89q.worldguard.bukkit.listener;
 
 import com.google.common.base.Predicate;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.util.formatting.text.BlockNbtComponent;
 import com.sk89q.worldedit.util.formatting.text.Component;
+import com.sk89q.worldedit.util.formatting.text.ComponentBuilder;
+import com.sk89q.worldedit.util.formatting.text.KeybindComponent;
+import com.sk89q.worldedit.util.formatting.text.NbtComponent;
+import com.sk89q.worldedit.util.formatting.text.SelectorComponent;
+import com.sk89q.worldedit.util.formatting.text.TextComponent;
 import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldedit.util.formatting.text.serializer.gson.GsonComponentSerializer;
 import com.sk89q.worldguard.LocalPlayer;
@@ -49,6 +55,7 @@ import com.sk89q.worldguard.protection.flags.Flags;
 import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.flags.StateFlag.State;
 import com.sk89q.worldguard.protection.regions.RegionQuery;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -121,14 +128,41 @@ public class RegionProtectionListener extends AbstractListener {
 
     static void formatAndSendDenyMessage(TranslatableComponent what, LocalPlayer localPlayer, Component message) {
         if (message == null) return;
-        if (message instanceof TranslatableComponent) {
-            message = ((TranslatableComponent) message).args(what);
+
+        String str = GsonComponentSerializer.INSTANCE.serialize(putTranslatableArgs(message, what));
+        localPlayer.print(GsonComponentSerializer.INSTANCE.deserialize(CommandUtils.replaceColorMacros(
+                WorldGuard.getInstance().getPlatform().getMatcher().replaceMacros(localPlayer, str))));
+    }
+
+    private static ComponentBuilder<?, ?> toBuilder(Component component) {
+        if (component instanceof BlockNbtComponent) {
+            return ((TextComponent) component).toBuilder();
+        } else if (component instanceof NbtComponent) {
+            return ((NbtComponent<?, ?>) component).toBuilder();
+        } else if (component instanceof KeybindComponent) {
+            return ((KeybindComponent) component).toBuilder();
+        } else if (component instanceof SelectorComponent) {
+            return ((SelectorComponent) component).toBuilder();
+        } else if (component instanceof TextComponent) {
+            return ((TextComponent) component).toBuilder();
+        } else if (component instanceof TranslatableComponent) {
+            return ((TranslatableComponent) component).toBuilder();
+        } else {
+            return null;
         }
-        String str = GsonComponentSerializer.INSTANCE.serialize(message);
-        message = GsonComponentSerializer.INSTANCE.deserialize(CommandUtils.replaceColorMacros(
-                WorldGuard.getInstance().getPlatform().getMatcher().replaceMacros(localPlayer, str)
-        ));
-        localPlayer.print(message);
+    }
+
+    private static Component putTranslatableArgs(Component component, Component... args) {
+        ComponentBuilder<?, ?> builder = toBuilder(component);
+        if (builder == null) return component;
+
+        return builder.mapChildrenDeep(c -> {
+            if (c instanceof TranslatableComponent) {
+                return ((TranslatableComponent) c).args(args);
+            } else {
+                return c;
+            }
+        }).build();
     }
 
     /**
