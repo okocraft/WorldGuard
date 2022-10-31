@@ -226,7 +226,6 @@ public final class Flags {
     public static final ComponentFlag DENY_MESSAGE_COMPONENT = register(new ComponentFlag("deny-message-component",
             TextComponent.empty()
                     .append(TranslatableComponent.of("worldguard.error.denied.hey", TextColor.RED, Sets.newHashSet(TextDecoration.BOLD)))
-                    .append(TextComponent.space())
                     .append(TranslatableComponent.of("worldguard.error.denied.what", TextColor.GRAY)
                             .decoration(TextDecoration.BOLD, false))));
     /**
@@ -242,7 +241,6 @@ public final class Flags {
     public static final ComponentFlag ENTRY_DENY_MESSAGE_COMPONENT = register(new ComponentFlag("entry-deny-message-component",
             TextComponent.empty()
                     .append(TranslatableComponent.of("worldguard.error.denied.hey", TextColor.RED, Sets.newHashSet(TextDecoration.BOLD)))
-                    .append(TextComponent.space())
                     .append(TranslatableComponent.of("worldguard.error.denied.entry", TextColor.GRAY))));
     /**
      * @deprecated The type of this flag will change from a StringFlag to a ComponentFlag to support JSON text
@@ -257,7 +255,6 @@ public final class Flags {
     public static final ComponentFlag EXIT_DENY_MESSAGE_COMPONENT = register(new ComponentFlag("exit-deny-message-component",
             TextComponent.empty()
                     .append(TranslatableComponent.of("worldguard.error.denied.hey", TextColor.RED, Sets.newHashSet(TextDecoration.BOLD)))
-                    .append(TextComponent.space())
                     .append(TranslatableComponent.of("worldguard.error.denied.exit", TextColor.GRAY))));
 
     private Flags() {

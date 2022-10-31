@@ -272,7 +272,7 @@
   "worldguard.error.misc.region-lister.failed-to-lookup-uuid": "Failed to lookup the UUID of '{0}'",
   "worldguard.error.misc.region-lister.lookup-was-interrupted": "The lookup the UUID of '{0}' was interrupted",
   "worldguard.error.misc.region-lister.no-user-exists": "A user by the name of '{0}' does not seem to exist.",
-  "worldguard.error.denied.hey": "Hey!",
+  "worldguard.error.denied.hey": "Hey! ",
   "worldguard.error.denied.what": "Sorry, but you can't {0} here.",
   "worldguard.error.denied.what.place-fire": "place fire",
   "worldguard.error.denied.what.use-frostwalker": "use frostwalker",
