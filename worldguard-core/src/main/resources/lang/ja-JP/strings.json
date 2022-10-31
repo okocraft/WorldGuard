@@ -83,7 +83,7 @@
   "worldguard.error.command.region.flag.cannot-use-empty": "-e(mpty) をフラグ値と一緒に使用することはできません。",
   "worldguard.command.region.flag.flag-list-for-invalid": "無効なフラグコマンド実行時に表示するフラグリスト。",
   "worldguard.command.region.flag.flag-list.available-flags": "利用可能なフラグ: ",
-  "worldguard.command.region.flag.flag-list.Click-to-set": "クリックして設定",
+  "worldguard.command.region.flag.flag-list.click-to-set": "クリックして設定",
   "worldguard.command.region.flag.flag-list.unknown-flag-specified": "不明なフラグが指定されました: {0}",
   "worldguard.command.region.flag.flag-list.or-use-command": "または {0} を使用します",
   "worldguard.command.region.flag.build-flag-warning.prefix": "警告：",

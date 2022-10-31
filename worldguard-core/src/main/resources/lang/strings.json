@@ -85,7 +85,7 @@
   "worldguard.error.command.region.flag.cannot-use-empty": "You cannot use -e(mpty) with a flag value.",
   "worldguard.command.region.flag.flag-list-for-invalid": "Flag list for invalid flag command.",
   "worldguard.command.region.flag.flag-list.available-flags": "Available flags: ",
-  "worldguard.command.region.flag.flag-list.Click-to-set": "Click to set",
+  "worldguard.command.region.flag.flag-list.click-to-set": "Click to set",
   "worldguard.command.region.flag.flag-list.unknown-flag-specified": "Unknown flag specified: {0}",
   "worldguard.command.region.flag.flag-list.or-use-command": "Or use the command {0}",
   "worldguard.command.region.flag.build-flag-warning.prefix": "WARNING:",

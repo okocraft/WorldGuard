@@ -1519,10 +1519,9 @@ public final class RegionCommands extends RegionCommandsBase {
 
             Collections.sort(flagList);
 
-            final TranslatableComponent.Builder builder =
-                    TranslatableComponent.builder("worldguard.command.region.flag.flag-list.Click-to-set");
+            final TextComponent.Builder builder = TextComponent.builder();
 
-            final HoverEvent clickToSet = HoverEvent.of(HoverEvent.Action.SHOW_TEXT, TranslatableComponent.of("worldguard.command.region.flag.flag-list.Click-to-set"));
+            final HoverEvent clickToSet = HoverEvent.of(HoverEvent.Action.SHOW_TEXT, TranslatableComponent.of("worldguard.command.region.flag.flag-list.click-to-set"));
             for (int i = 0; i < flagList.size(); i++) {
                 String flag = flagList.get(i);
 
@@ -1537,9 +1536,11 @@ public final class RegionCommands extends RegionCommandsBase {
                     .append(TranslatableComponent.of("worldguard.command.region.flag.flag-list.unknown-flag-specified", TextColor.RED)
                             .args(TextComponent.of(flagName))).build()
                     .append(TextComponent.newline())
+                    .append(TranslatableComponent.of("worldguard.command.region.flag.flag-list.available-flags"))
                     .append(builder.build());
             if (sender.isPlayer()) {
-                return ret.append(TranslatableComponent.of("worldguard.command.region.flag.flag-list.or-use-command", TextColor.LIGHT_PURPLE).args(TextComponent.of("/rg flags " + regionId, TextColor.AQUA)
+                return ret.append(TranslatableComponent.of("worldguard.command.region.flag.flag-list.or-use-command", TextColor.LIGHT_PURPLE)
+                        .args(TextComponent.of("/rg flags " + regionId, TextColor.AQUA)
                                 .clickEvent(ClickEvent.of(ClickEvent.Action.RUN_COMMAND,
                                         "/rg flags -w \"" + world.getName() + "\" " + regionId))));
             }
