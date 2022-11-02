@@ -257,6 +257,14 @@
 
   "worldguard.error.command.member.add-owner.owning-maximum-regions": "You already own the maximum allowed amount of regions.",
 
+  "worldguard.command.member.add-member.adding-members": "Adding members from the region '{0}' on '{1}'",
+  "worldguard.command.member.add-member.member-added": "Region '{0}' updated with new members.",
+  "worldguard.command.member.add-member.failed": "Failed to add new members",
+
+  "worldguard.command.member.add-owner.adding-owners": "Adding owners from the region '{0}' on '{1}'",
+  "worldguard.command.member.add-owner.owner-added": "Region '{0}' updated with new owners.",
+  "worldguard.command.member.add-owner.failed": "Failed to remove members",
+
   "worldguard.error.command.member.remove-member.list-names": "List some names to remove, or use -a to remove all.",
   "worldguard.command.member.remove-member.removing-members": "Removing members from the region '{0}' on '{1}'",
   "worldguard.command.member.remove-member.delay-message": "(Please wait... querying player names...)",

@@ -75,12 +75,18 @@ public class MemberCommands extends RegionCommandsBase {
                 WorldGuard.getInstance().getProfileService(), args.getParsedPaddedSlice(1, 0));
         resolver.setLocatorPolicy(args.hasFlag('n') ? UserLocatorPolicy.NAME_ONLY : UserLocatorPolicy.UUID_ONLY);
 
+        final String description = LegacyComponentSerializer.legacy().serialize(
+                WorldEditText.format(
+                        TranslatableComponent.of("worldguard.command.member.add-member.adding-members")
+                                .args(TextComponent.of(region.getId()), TextComponent.of(world.getName())),
+                        sender.getLocale()
+                )
+        );
 
-        final String description = String.format("Adding members to the region '%s' on '%s'", region.getId(), world.getName());
         AsyncCommandBuilder.wrap(resolver, sender)
                 .registerWithSupervisor(worldGuard.getSupervisor(), description)
-                .onSuccess(String.format("Region '%s' updated with new members.", region.getId()), region.getMembers()::addAll)
-                .onFailure("Failed to add new members", worldGuard.getExceptionConverter())
+                .onSuccess(TranslatableComponent.of("worldguard.command.member.add-member.member-added").args(TextComponent.of(region.getId())), region.getMembers()::addAll)
+                .onFailure(TranslatableComponent.of("worldguard.command.member.add-member.failed"), worldGuard.getExceptionConverter())
                 .buildAndExec(worldGuard.getExecutorService());
     }
 
@@ -113,12 +119,18 @@ public class MemberCommands extends RegionCommandsBase {
                 WorldGuard.getInstance().getProfileService(), args.getParsedPaddedSlice(1, 0));
         resolver.setLocatorPolicy(args.hasFlag('n') ? UserLocatorPolicy.NAME_ONLY : UserLocatorPolicy.UUID_ONLY);
 
+        final String description = LegacyComponentSerializer.legacy().serialize(
+                WorldEditText.format(
+                        TranslatableComponent.of("worldguard.command.member.add-owner.adding-owners")
+                                .args(TextComponent.of(region.getId()), TextComponent.of(world.getName())),
+                        sender.getLocale()
+                )
+        );
 
-        final String description = String.format("Adding owners to the region '%s' on '%s'", region.getId(), world.getName());
         AsyncCommandBuilder.wrap(checkedAddOwners(sender, manager, region, world, resolver), sender)
                 .registerWithSupervisor(worldGuard.getSupervisor(), description)
-                .onSuccess(String.format("Region '%s' updated with new owners.", region.getId()), region.getOwners()::addAll)
-                .onFailure("Failed to add new owners", worldGuard.getExceptionConverter())
+                .onSuccess(TranslatableComponent.of("worldguard.command.member.add-owner.owner-added").args(TextComponent.of(region.getId())), region.getOwners()::addAll)
+                .onFailure(TranslatableComponent.of("worldguard.command.member.add-owner.failed"), worldGuard.getExceptionConverter())
                 .buildAndExec(worldGuard.getExecutorService());
     }
 
