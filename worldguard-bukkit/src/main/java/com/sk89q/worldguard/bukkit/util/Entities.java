@@ -29,6 +29,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Flying;
 import org.bukkit.entity.Hanging;
+import org.bukkit.entity.Hoglin;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Minecart;
 import org.bukkit.entity.Monster;
@@ -163,7 +164,8 @@ public final class Entities {
                 || entity instanceof Slime
                 || entity instanceof Flying
                 || entity instanceof EnderDragon
-                || entity instanceof Shulker;
+                || entity instanceof Shulker
+                || entity instanceof Hoglin;
     }
 
     /**
