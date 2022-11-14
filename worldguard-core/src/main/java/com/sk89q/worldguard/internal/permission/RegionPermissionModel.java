@@ -87,7 +87,11 @@ public class RegionPermissionModel extends AbstractPermissionModel {
     public boolean mayDelete(ProtectedRegion region) {
         return hasPatternPermission("remove", region);
     }
-    
+
+    public boolean mayResize(ProtectedRegion region) {
+        return hasPatternPermission("resize", region);
+    }
+
     public boolean maySetPriority(ProtectedRegion region) {
         return hasPatternPermission("setpriority", region);
     }
