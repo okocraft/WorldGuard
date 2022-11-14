@@ -55,6 +55,7 @@ import com.sk89q.worldguard.config.WorldConfiguration;
 import com.sk89q.worldguard.internal.permission.RegionPermissionModel;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.FlagValueCalculator;
+import com.sk89q.worldguard.protection.RegionResultSet;
 import com.sk89q.worldguard.protection.flags.Flag;
 import com.sk89q.worldguard.protection.flags.FlagContext;
 import com.sk89q.worldguard.protection.flags.Flags;
@@ -81,7 +82,9 @@ import com.sk89q.worldguard.util.logging.LoggerToChatHandler;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -363,6 +366,100 @@ public final class RegionCommands extends RegionCommandsBase {
         region.getOwners().addPlayer(player);
         manager.addRegion(region);
         player.print(TranslatableComponent.of("worldguard.command.region.claim.claimed").args(TextComponent.of(id)));
+    }
+
+    /**
+     * Resize command for users.
+     *
+     * <p>This command is a joke and it needs to be rewritten. It was contributed
+     * code :(</p>
+     *
+     * @param args the arguments
+     * @param sender the sender
+     * @throws CommandException any error
+     */
+    @Command(aliases = {"resize", "reclaim"},
+             usage = "[-w <world>] <id>",
+             desc = "Re-define the shape of a region for users",
+             flags = "w:",
+             min = 1, max = 1)
+    public void resize(CommandContext args, Actor sender) throws CommandException {
+        warnAboutSaveFailures(sender);
+
+        LocalPlayer player = worldGuard.checkPlayer(sender);
+        RegionPermissionModel permModel = getPermissionModel(player);
+
+        String id = checkRegionId(args.getString(0), false);
+        World world = checkWorld(args, sender, 'w');
+        RegionManager manager = checkRegionManager(world);
+
+        ProtectedRegion existing = checkExistingRegion(manager, id, false);
+
+        // Check permissions
+        if (!permModel.mayResize(existing)) {
+            // TODO: if we use piston correctly, we can remove this.
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
+        }
+
+        ProtectedRegion region = checkRegionFromSelection(sender, id);
+
+        WorldConfiguration wcfg = WorldGuard.getInstance().getPlatform().getGlobalStateManager().get(player.getWorld());
+
+        // We have to check whether this region violates the space of any other region
+        Set<ProtectedRegion> regionSet = new HashSet<>(manager.getApplicableRegions(region).getRegions());
+        regionSet.remove(existing);
+        ApplicableRegionSet regions = new RegionResultSet(regionSet, manager.getRegion("__global__"));
+
+        // Check if this region overlaps any other region
+        if (regions.size() > 0) {
+            if (!regions.isOwnerOfAll(player)) {
+                var builder = TranslatableComponent.of("worldguard.error.command.region.claim.overlaps").toBuilder().append(TextComponent.newline());
+                regions.getRegions().stream()
+                        .map(ProtectedRegion::getId)
+                        .sorted()
+                        .map(regionID -> TextComponent.of(regionID, TextColor.AQUA).clickEvent(ClickEvent.of(ClickEvent.Action.RUN_COMMAND, "/rg info -w \"" + world + "\" " + regionID)))
+                        .forEachOrdered(component -> builder.append(component).append(TextComponent.space()));
+                throw new CommandException(builder.build(), ImmutableList.of());
+            }
+            if (wcfg.claimOnlyInsideExistingRegions && !region.isCoveredBy(regions.getRegions())) {
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.error.command.region.claim.only-inside"),
+                        ImmutableList.of()
+                );
+            }
+        } else {
+            if (wcfg.claimOnlyInsideExistingRegions) {
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.error.command.region.claim.only-inside"),
+                        ImmutableList.of()
+                );
+            }
+        }
+
+        if (wcfg.maxClaimVolume >= Integer.MAX_VALUE) {
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.region.claim.config-maximum-volume-invalid")
+                            .args(TextComponent.of(Integer.MAX_VALUE)),
+                    ImmutableList.of()
+            );
+        }
+
+        // Check claim volume
+        if (!permModel.mayClaimRegionsUnbounded()) {
+            if (region.volume() > wcfg.maxClaimVolume) {
+                player.printError(TranslatableComponent.of("worldguard.error.command.region.claim.too-large"));
+                player.printError(TranslatableComponent.of("worldguard.error.command.region.claim.too-large.min-max")
+                        .args(TextComponent.of(wcfg.maxClaimVolume), TextComponent.of(region.volume())));
+                return;
+            }
+        }
+
+        region.copyFrom(existing);
+        manager.addRegion(region);
+        player.print(TranslatableComponent.of("worldguard.command.region.redefine.updated").args(TextComponent.of(id)));
     }
 
     /**
