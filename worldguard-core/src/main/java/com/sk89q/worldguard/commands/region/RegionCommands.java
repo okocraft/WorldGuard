@@ -315,6 +315,12 @@ public final class RegionCommands extends RegionCommandsBase {
                         ImmutableList.of()
                 );
             }
+            if (wcfg.claimOnlyInsideExistingRegions && !region.isCoveredBy(regions.getRegions())) {
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.error.command.region.claim.only-inside"),
+                        ImmutableList.of()
+                );
+            }
         } else {
             if (wcfg.claimOnlyInsideExistingRegions) {
                 throw new CommandException(
