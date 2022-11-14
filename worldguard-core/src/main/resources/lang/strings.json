@@ -132,6 +132,12 @@
   "worldguard.command.region.remove.delay-message": "Please wait... removing region.",
   "worldguard.command.region.remove.success-remove": "Successfully removed {0}.",
   "worldguard.command.region.remove.failed-removing-region": "Failed to remove region",
+
+  "worldguard.command.region.rename.renaming-region": "Renaming region '{0}' to '{1}' in '{2}'",
+  "worldguard.command.region.rename.delay-message": "Please wait... renaming region.",
+  "worldguard.command.region.rename.success-rename": "Successfully renamed '{0}' to '{1}'",
+  "worldguard.command.region.rename.failed-renaming-region": "Failed to rename region",
+
   "worldguard.command.region.load.loading-region-data": "Loading region data for '{0}'.",
   "worldguard.command.region.load.wait-for-loading": "Please wait... {0}",
   "worldguard.command.region.load.loaded-region-data": "Loaded region data for '{0}'",
