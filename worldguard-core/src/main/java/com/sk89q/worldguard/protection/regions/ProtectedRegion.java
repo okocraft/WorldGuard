@@ -549,6 +549,22 @@ public abstract class ProtectedRegion implements ChangeTracked, Comparable<Prote
     }
 
     /**
+     * Check to see if other regions completely cover this region.
+     *
+     * @param others other regions.
+     * @return true if this region is covered by others.
+     */
+    public boolean isCoveredBy(Collection<? extends ProtectedRegion> others) {
+        Area testArea = toArea();
+        for (ProtectedRegion other : others) {
+            if (intersectsBoundingBox(other)) {
+                testArea.subtract(other.toArea());
+            }
+        }
+        return testArea.isEmpty();
+    }
+
+    /**
      * Get the type of region.
      *
      * @return the type
