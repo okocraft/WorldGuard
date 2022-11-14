@@ -50,6 +50,7 @@ import com.sk89q.worldguard.commands.task.RegionLister;
 import com.sk89q.worldguard.commands.task.RegionManagerLoader;
 import com.sk89q.worldguard.commands.task.RegionManagerSaver;
 import com.sk89q.worldguard.commands.task.RegionRemover;
+import com.sk89q.worldguard.commands.task.RegionRenamer;
 import com.sk89q.worldguard.config.ConfigurationManager;
 import com.sk89q.worldguard.config.WorldConfiguration;
 import com.sk89q.worldguard.internal.permission.RegionPermissionModel;
@@ -1080,6 +1081,59 @@ public final class RegionCommands extends RegionCommandsBase {
                         TextColor.LIGHT_PURPLE).args(TextComponent.of(removed.stream().map(ProtectedRegion::getId).collect(Collectors.joining(", "))))))
                 .onFailure(
                         TranslatableComponent.of("worldguard.command.region.remove.failed-removing-region"),
+                        WorldGuard.getInstance().getExceptionConverter()
+                ).buildAndExec(WorldGuard.getInstance().getExecutorService());
+    }
+
+    /**
+     * Rename a region.
+     *
+     * @param args the arguments
+     * @param sender the sender
+     * @throws CommandException any error
+     */
+    @Command(aliases = {"rename", "name"},
+             usage = "[-w <world>] <id> <name>",
+             flags = "w:",
+             desc = "Rename a region",
+             min = 2, max = 3)
+    public void rename(CommandContext args, Actor sender) throws CommandException {
+        warnAboutSaveFailures(sender);
+
+        World world = checkWorld(args, sender, 'w'); // Get the world
+
+        // Lookup the existing region
+        RegionManager manager = checkRegionManager(world);
+        ProtectedRegion existing = checkExistingRegion(manager, args.getString(0), false);
+
+        // Check permissions
+        if (!getPermissionModel(sender).mayRename(existing)) {
+            // TODO: if we use piston correctly, we can remove this.
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
+        }
+
+        String newName = checkRegionId(args.getString(1), false);
+        checkRegionDoesNotExist(manager, newName, false);
+
+        RegionRenamer task = new RegionRenamer(manager, existing, newName);
+
+        final String description = LegacyComponentSerializer.legacy().serialize(WorldEditText.format(
+                TranslatableComponent.of("worldguard.command.region.rename.renaming-region")
+                        .args(TextComponent.of(existing.getId()), TextComponent.of(newName), TextComponent.of(world.getName())),
+                sender.getLocale()
+        ));
+
+        AsyncCommandBuilder.wrap(task, sender)
+                .registerWithSupervisor(WorldGuard.getInstance().getSupervisor(), description)
+                .setDelayMessage(TranslatableComponent.of("worldguard.command.region.rename.delay-message"))
+                .onSuccess((Component) null, renamed -> sender.print(TranslatableComponent.of(
+                        "worldguard.command.region.rename.success-rename",
+                        TextColor.LIGHT_PURPLE).args(TextComponent.of(existing.getId()), TextComponent.of(newName))))
+                .onFailure(
+                        TranslatableComponent.of("worldguard.command.region.rename.failed-renaming-region"),
                         WorldGuard.getInstance().getExceptionConverter()
                 ).buildAndExec(WorldGuard.getInstance().getExecutorService());
     }

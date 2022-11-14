@@ -88,6 +88,10 @@ public class RegionPermissionModel extends AbstractPermissionModel {
         return hasPatternPermission("remove", region);
     }
 
+    public boolean mayRename(ProtectedRegion region) {
+        return hasPatternPermission("rename", region);
+    }
+
     public boolean mayResize(ProtectedRegion region) {
         return hasPatternPermission("resize", region);
     }
