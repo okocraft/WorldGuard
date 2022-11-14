@@ -46,6 +46,7 @@
   "worldguard.error.command.region.claim.too-large": "This region is too large to claim.",
   "worldguard.error.command.region.claim.too-large.min-max": "Max. volume: {0}, your volume: {1}",
   "worldguard.command.region.claim.claimed": "A new region has been claimed named '{0}'.",
+  "worldguard.command.region.copy.copied": "Region '{0}' has been copied as new region '{1}' on specified area.",
   "worldguard.error.command.region.select.specify-name": "Please specify a region name.",
   "worldguard.error.command.region.info.specify-region": "Please specify the region with /region info -w world_name region_name.",
 

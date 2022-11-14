@@ -46,6 +46,7 @@
   "worldguard.error.command.region.claim.too-large": "保護するには範囲が広すぎます。",
   "worldguard.error.command.region.claim.too-large.min-max": "最大体積: {0}、あなたの指定された保護の体積: {1}",
   "worldguard.command.region.claim.claimed": "新しい保護 '{0}' が作成されました。",
+  "worldguard.command.region.copy.copied": "保護 '{0}' が指定された範囲の新しい保護 '{1}' としてコピーされました。",
   "worldguard.error.command.region.select.specify-name": "保護名を指定してください。",
   "worldguard.error.command.region.info.specify-region": "/region info -w world_name region_name で保護を指定してください。",
   "worldguard.command.region.info.region": "保護: ",
