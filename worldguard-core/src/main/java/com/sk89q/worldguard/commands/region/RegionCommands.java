@@ -296,18 +296,6 @@ public final class RegionCommands extends RegionCommandsBase {
             }
         }
 
-        ProtectedRegion existing = manager.getRegion(id);
-
-        // Check for an existing region
-        if (existing != null) {
-            if (!existing.getOwners().contains(player)) {
-                throw new CommandException(
-                        TranslatableComponent.of("worldguard.error.command.region.claim.region-already-exists"),
-                        ImmutableList.of()
-                );
-            }
-        }
-
         // We have to check whether this region violates the space of any other region
         ApplicableRegionSet regions = manager.getApplicableRegions(region);
 
@@ -367,6 +355,112 @@ public final class RegionCommands extends RegionCommandsBase {
         region.getOwners().addPlayer(player);
         manager.addRegion(region);
         player.print(TranslatableComponent.of("worldguard.command.region.claim.claimed").args(TextComponent.of(id)));
+    }
+
+    /**
+     * Claiming command for users.
+     *
+     * <p>This command is a joke and it needs to be rewritten. It was contributed
+     * code :(</p>
+     *
+     * @param args the arguments
+     * @param sender the sender
+     * @throws CommandException any error
+     */
+    @Command(aliases = {"copy"},
+             usage = "<id> [-w <world>] <source>",
+             desc = "Copy existing region",
+            flags = "w:",
+             min = 2, max = 3)
+    public void copy(CommandContext args, Actor sender) throws CommandException {
+        warnAboutSaveFailures(sender);
+
+        LocalPlayer player = worldGuard.checkPlayer(sender);
+        RegionPermissionModel permModel = getPermissionModel(player);
+
+        RegionManager manager = checkRegionManager(player.getWorld());
+        ProtectedRegion existing = checkExistingRegion(manager, args.getString(1), true);
+
+        // Check permissions
+        if (!permModel.mayCopy(existing)) {
+            // TODO: if we use piston correctly, we can remove this.
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
+        }
+
+        String id = checkRegionId(args.getString(0), false);
+        checkRegionDoesNotExist(manager, id, false);
+        ProtectedRegion region = checkRegionFromSelection(player, id);
+
+        WorldConfiguration wcfg = WorldGuard.getInstance().getPlatform().getGlobalStateManager().get(player.getWorld());
+
+        // Check whether the player has created too many regions
+        if (!permModel.mayClaimRegionsUnbounded()) {
+            int maxRegionCount = wcfg.getMaxRegionCount(player);
+            if (maxRegionCount >= 0
+                    && manager.getRegionCountOfPlayer(player) >= maxRegionCount) {
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.error.command.region.claim.too-many-regions"),
+                        ImmutableList.of()
+                );
+            }
+        }
+
+        // We have to check whether this region violates the space of any other region
+        ApplicableRegionSet regions = manager.getApplicableRegions(region);
+
+        // Check if this region overlaps any other region
+        if (regions.size() > 0) {
+            if (!regions.isOwnerOfAll(player)) {
+                var builder = TranslatableComponent.of("worldguard.error.command.region.claim.overlaps").toBuilder().append(TextComponent.newline());
+                regions.getRegions().stream()
+                        .map(ProtectedRegion::getId)
+                        .sorted()
+                        .map(regionID -> TextComponent.of(regionID, TextColor.AQUA).clickEvent(ClickEvent.of(ClickEvent.Action.RUN_COMMAND, "/rg info -w \"" + player.getWorld().getName() + "\" " + regionID)))
+                        .forEachOrdered(component -> builder.append(component).append(TextComponent.space()));
+                throw new CommandException(builder.build(), ImmutableList.of());
+            }
+            if (wcfg.claimOnlyInsideExistingRegions && !region.isCoveredBy(regions.getRegions())) {
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.error.command.region.claim.only-inside"),
+                        ImmutableList.of()
+                );
+            }
+        } else {
+            if (wcfg.claimOnlyInsideExistingRegions) {
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.error.command.region.claim.only-inside"),
+                        ImmutableList.of()
+                );
+            }
+        }
+
+        if (wcfg.maxClaimVolume >= Integer.MAX_VALUE) {
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.region.claim.config-maximum-volume-invalid")
+                            .args(TextComponent.of(Integer.MAX_VALUE)),
+                    ImmutableList.of()
+            );
+        }
+
+        // Check claim volume
+        if (!permModel.mayClaimRegionsUnbounded()) {
+            if (region.volume() > wcfg.maxClaimVolume) {
+                player.printError(TranslatableComponent.of("worldguard.error.command.region.claim.too-large"));
+                player.printError(TranslatableComponent.of("worldguard.error.command.region.claim.too-large.min-max")
+                        .args(TextComponent.of(wcfg.maxClaimVolume), TextComponent.of(region.volume())));
+                return;
+            }
+        }
+
+        region.copyFrom(existing);
+        if (!region.getOwners().contains(sender.getUniqueId())) {
+            region.getOwners().addPlayer(sender.getUniqueId());
+        }
+        manager.addRegion(region);
+        player.print(TranslatableComponent.of("worldguard.command.region.copy.copied").args(TextComponent.of(existing.getId()), TextComponent.of(id)));
     }
 
     /**

@@ -79,13 +79,17 @@ public class RegionPermissionModel extends AbstractPermissionModel {
     public boolean mayClaim() {
         return hasPluginPermission("region.claim");
     }
-    
+
     public boolean mayClaimRegionsUnbounded() {
         return hasPluginPermission("region.unlimited");
     }
     
     public boolean mayDelete(ProtectedRegion region) {
         return hasPatternPermission("remove", region);
+    }
+
+    public boolean mayCopy(ProtectedRegion sourceRegion) {
+        return hasPatternPermission("copy", sourceRegion);
     }
 
     public boolean mayRename(ProtectedRegion region) {
