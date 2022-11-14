@@ -900,7 +900,7 @@ public final class RegionCommands extends RegionCommandsBase {
         printout.append(TranslatableComponent.of(
                 "worldguard.command.region.setparent.inheritance-is-set",
                 TextColor.LIGHT_PURPLE
-        ));
+        ).args(TextComponent.of(child.getId())));
         if (parent != null) {
             printout.newline();
             printout.append(
@@ -909,9 +909,7 @@ public final class RegionCommands extends RegionCommandsBase {
                             TextColor.GRAY
                     ).args(
                             TextComponent.of(parent.getId()),
-                            TextComponent.newline()
-                                    .append(printout.getParentTree(true))
-                                    .append(TextComponent.of(")", TextColor.GRAY))
+                            TextComponent.of("\n").append(printout.getParentTree(true))
                     )
             );
         } else {

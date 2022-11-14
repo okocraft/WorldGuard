@@ -121,7 +121,7 @@
   "worldguard.command.region.setpriority.priority-is-set": "'{0}' の優先度が {1} に設定されました (数値が大きいほど優先されます)。",
   "worldguard.command.region.setparent.circular-inheritance": "うおー！ '{0}' を '{1}' の親に設定すると、循環継承が発生します。",
   "worldguard.command.region.setparent.current-inheritance": "('{0}' の現在の継承:{1})",
-  "worldguard.command.region.setparent.inheritance-is-set": "保護 '{0}' の継承セット。",
+  "worldguard.command.region.setparent.inheritance-is-set": "保護 '{0}' の継承を設定しました。",
   "worldguard.command.region.setparent.region-is-now-orphaned": " 保護は現在孤立しています。",
   "worldguard.command.region.remove.cannot-use-u-and-f-together": "-u (親の設定解除) と -f (子の削除) を同時に使用することはできません。",
   "worldguard.command.region.remove.removing-region": "'{1}' の保護 '{0}' を削除しています",
