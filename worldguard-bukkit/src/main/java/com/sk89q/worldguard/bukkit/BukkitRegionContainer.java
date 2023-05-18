@@ -26,6 +26,7 @@ import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.math.BlockVector2;
 import com.sk89q.worldedit.world.World;
 import com.sk89q.worldguard.WorldGuard;
+import com.sk89q.worldguard.bukkit.scheduler.Schedulers;
 import com.sk89q.worldguard.config.WorldConfiguration;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.RegionContainer;
@@ -94,7 +95,7 @@ public class BukkitRegionContainer extends RegionContainer {
             }
         }, plugin);
 
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, cache::invalidateAll, CACHE_INVALIDATION_INTERVAL, CACHE_INVALIDATION_INTERVAL);
+        Schedulers.getGlobalRegionScheduler().runAtFixedRate(t -> cache.invalidateAll(), null, CACHE_INVALIDATION_INTERVAL, CACHE_INVALIDATION_INTERVAL);
     }
 
     public void shutdown() {

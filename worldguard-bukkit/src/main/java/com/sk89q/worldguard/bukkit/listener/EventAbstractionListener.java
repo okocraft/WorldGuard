@@ -40,6 +40,7 @@ import com.sk89q.worldguard.bukkit.listener.debounce.legacy.AbstractEventDebounc
 import com.sk89q.worldguard.bukkit.listener.debounce.legacy.BlockEntityEventDebounce;
 import com.sk89q.worldguard.bukkit.listener.debounce.legacy.EntityEntityEventDebounce;
 import com.sk89q.worldguard.bukkit.listener.debounce.legacy.InventoryMoveItemEventDebounce;
+import com.sk89q.worldguard.bukkit.scheduler.Schedulers;
 import com.sk89q.worldguard.bukkit.util.Blocks;
 import com.sk89q.worldguard.bukkit.util.Entities;
 import com.sk89q.worldguard.bukkit.util.Events;
@@ -983,8 +984,10 @@ public class EventAbstractionListener extends AbstractListener {
             handleInventoryHolderUse(event, cause, targetHolder);
 
             if (event.isCancelled() && causeHolder instanceof Hopper && wcfg.breakDeniedHoppers) {
-                Bukkit.getScheduler().scheduleSyncDelayedTask(getPlugin(),
-                        () -> ((Hopper) causeHolder).getBlock().breakNaturally());
+                Schedulers.getRegionScheduler(((Hopper) causeHolder).getLocation()).run(
+                        t -> ((Hopper) causeHolder).getBlock().breakNaturally(),
+                        null
+                );
             } else {
                 entry.setCancelled(event.isCancelled());
             }

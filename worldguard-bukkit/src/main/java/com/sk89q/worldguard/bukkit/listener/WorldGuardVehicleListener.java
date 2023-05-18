@@ -74,6 +74,7 @@ public class WorldGuardVehicleListener extends AbstractListener {
                         return;
                     }
                 }
+                playerPassengers.forEach(vehicle::addPassenger);
             }
         }
     }
