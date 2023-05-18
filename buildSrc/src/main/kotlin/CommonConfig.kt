@@ -34,5 +34,6 @@ fun Project.applyCommonConfiguration() {
         header(rootProject.file("HEADER.txt"))
         include("**/*.java")
         include("**/*.kt")
+        exclude("com/sk89q/worldguard/bukkit/scheduler/**/*.java")
     }
 }
