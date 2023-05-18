@@ -23,6 +23,7 @@ import com.sk89q.util.yaml.YAMLProcessor;
 import com.sk89q.worldedit.util.report.Unreported;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class YamlWorldConfiguration extends WorldConfiguration {
@@ -75,7 +76,7 @@ public abstract class YamlWorldConfiguration extends WorldConfiguration {
         List<Integer> res = parentConfig.getIntList(node, def);
 
         if (res == null || res.size() == 0) {
-            parentConfig.setProperty(node, new ArrayList<Integer>());
+            parentConfig.setProperty(node, Collections.synchronizedList(new ArrayList<Integer>()));
         }
 
         if (config.getProperty(node) != null) {
@@ -89,7 +90,7 @@ public abstract class YamlWorldConfiguration extends WorldConfiguration {
         List<String> res = parentConfig.getStringList(node, def);
 
         if (res == null || res.size() == 0) {
-            parentConfig.setProperty(node, new ArrayList<String>());
+            parentConfig.setProperty(node, Collections.synchronizedList(new ArrayList<String>()));
         }
 
         if (config.getProperty(node) != null) {
@@ -109,7 +110,7 @@ public abstract class YamlWorldConfiguration extends WorldConfiguration {
             res = new ArrayList<>();
         }
 
-        return res;
+        return Collections.synchronizedList(res);
     }
 
     public Object getProperty(String node) {

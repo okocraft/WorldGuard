@@ -31,6 +31,7 @@ import com.sk89q.worldedit.world.World;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.internal.platform.StringMatcher;
+import java.util.Collections;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -139,11 +140,11 @@ public class BukkitStringMatcher implements StringMatcher {
                 if (player.getName().equalsIgnoreCase(filter)) {
                     List<LocalPlayer> list = new ArrayList<>();
                     list.add(player);
-                    return list;
+                    return Collections.synchronizedList(list);
                 }
             }
 
-            return new ArrayList<>();
+            return Collections.synchronizedList(new ArrayList<>());
             // Allow partial name matching
         } else if (filter.charAt(0) == '*' && filter.length() >= 2) {
             filter = filter.substring(1);
@@ -156,7 +157,7 @@ public class BukkitStringMatcher implements StringMatcher {
                 }
             }
 
-            return list;
+            return Collections.synchronizedList(list);
 
             // Start with name matching
         } else {
@@ -168,7 +169,7 @@ public class BukkitStringMatcher implements StringMatcher {
                 }
             }
 
-            return list;
+            return Collections.synchronizedList(list);
         }
     }
 
@@ -184,7 +185,7 @@ public class BukkitStringMatcher implements StringMatcher {
         List<LocalPlayer> wgPlayers = Bukkit.getServer().getOnlinePlayers().stream().map(player -> WorldGuardPlugin.inst().wrapPlayer(player)).collect(Collectors.toList());
 
         if (filter.equals("*")) {
-            return checkPlayerMatch(wgPlayers);
+            return checkPlayerMatch(Collections.synchronizedList(wgPlayers));
         }
 
         // Handle special hash tag groups
@@ -202,7 +203,7 @@ public class BukkitStringMatcher implements StringMatcher {
                     }
                 }
 
-                return checkPlayerMatch(players);
+                return checkPlayerMatch(Collections.synchronizedList(players));
 
                 // Handle #near, which is for nearby players.
             } else if (filter.equalsIgnoreCase("#near")) {
@@ -217,7 +218,7 @@ public class BukkitStringMatcher implements StringMatcher {
                     }
                 }
 
-                return checkPlayerMatch(players);
+                return checkPlayerMatch(Collections.synchronizedList(players));
 
             } else {
                 throw new CommandException(

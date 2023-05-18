@@ -52,7 +52,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -118,7 +117,9 @@ public class YamlRegionFile implements RegionDatabase {
         try {
             config.load();
         } catch (FileNotFoundException e) {
-            return new HashSet<>(loaded.values());
+            Set<ProtectedRegion> ret = ConcurrentHashMap.newKeySet();
+            ret.addAll(loaded.values());
+            return ret;
         } catch (IOException | ParserException e) {
             throw new StorageException("Failed to load region data from '" + file + "'", e);
         }
@@ -185,7 +186,9 @@ public class YamlRegionFile implements RegionDatabase {
         // Relink parents
         RegionDatabaseUtils.relinkParents(loaded, parentSets);
 
-        return new HashSet<>(loaded.values());
+        Set<ProtectedRegion> ret = ConcurrentHashMap.newKeySet();
+        ret.addAll(loaded.values());
+        return ret;
     }
 
     @Override
@@ -224,7 +227,7 @@ public class YamlRegionFile implements RegionDatabase {
                     points.add(data);
                 }
 
-                node.setProperty("points", points);
+                node.setProperty("points", Collections.synchronizedList(points));
             } else if (region instanceof GlobalProtectedRegion) {
                 node.setProperty("type", "global");
             } else {
@@ -318,7 +321,7 @@ public class YamlRegionFile implements RegionDatabase {
             list.add(String.valueOf(str));
         }
 
-        domainData.put(key, list);
+        domainData.put(key, Collections.synchronizedList(list));
     }
 
     /**

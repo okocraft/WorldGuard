@@ -23,9 +23,10 @@ import com.google.common.collect.Sets;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static java.util.Objects.requireNonNull;
 
@@ -78,7 +79,7 @@ public class SetFlag<T> extends Flag<Set<T>> {
     public Set<T> unmarshal(Object o) {
         if (o instanceof Collection<?>) {
             Collection<?> collection = (Collection<?>) o;
-            Set<T> items = new HashSet<>();
+            Set<T> items = ConcurrentHashMap.newKeySet();
 
             for (Object sub : collection) {
                 T item = subFlag.unmarshal(sub);
@@ -100,7 +101,7 @@ public class SetFlag<T> extends Flag<Set<T>> {
             list.add(subFlag.marshal(item));
         }
 
-        return list;
+        return Collections.synchronizedList(list);
     }
     
 }

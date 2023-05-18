@@ -39,7 +39,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -255,7 +254,7 @@ public class FlagValueCalculator {
         Map<ProtectedRegion, V> consideredValues = new ConcurrentHashMap<>();
         Map<ProtectedRegion, V> fallbackValues = new ConcurrentHashMap<>();
         int minimumPriority = Integer.MIN_VALUE;
-        Set<ProtectedRegion> ignoredParents = new HashSet<>();
+        Set<ProtectedRegion> ignoredParents = ConcurrentHashMap.newKeySet();
 
         for(ProtectedRegion region : getApplicable()) {
             int priority = getPriority(region);
@@ -395,7 +394,7 @@ public class FlagValueCalculator {
         int minimumPriority = Integer.MIN_VALUE;
 
         Map<ProtectedRegion, V> consideredValues = new ConcurrentHashMap<>();
-        Set<ProtectedRegion> ignoredParents = new HashSet<>();
+        Set<ProtectedRegion> ignoredParents = ConcurrentHashMap.newKeySet();
 
         for (ProtectedRegion region : getApplicable()) {
             int priority = getPriority(region);

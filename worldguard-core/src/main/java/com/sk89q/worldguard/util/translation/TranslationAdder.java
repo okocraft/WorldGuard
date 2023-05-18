@@ -27,10 +27,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 public final class TranslationAdder {
@@ -48,7 +48,7 @@ public final class TranslationAdder {
     private TranslationAdder() {}
 
     public static void addAndSaveTranslations() {
-        Set<Locale> loaded = new HashSet<>();
+        Set<Locale> loaded = ConcurrentHashMap.newKeySet();
         loaded.add(TranslationManager.getDefaultLocale());
         loaded.addAll(TranslationManager.getLoadedLocales());
         loaded.forEach(TranslationAdder::addAndSaveTranslations);
@@ -56,7 +56,8 @@ public final class TranslationAdder {
 
     public static void addAndSaveTranslations(Locale locale) {
         Map<String, String> worldEditTranslations = WORLDEDIT_TRANSLATION.getTranslationMap(locale);
-        Set<String> currentKeys = new HashSet<>(worldEditTranslations.keySet());
+        Set<String> currentKeys = ConcurrentHashMap.newKeySet();
+        currentKeys.addAll(worldEditTranslations.keySet());
         WORLDGUARD_TRANSLATION.getTranslationMap(locale).forEach(worldEditTranslations::putIfAbsent);
         if (!currentKeys.containsAll(worldEditTranslations.keySet())) {
             saveWorldEditTranslations(locale, worldEditTranslations);

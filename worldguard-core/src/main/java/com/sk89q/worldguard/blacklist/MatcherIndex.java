@@ -25,6 +25,7 @@ import com.sk89q.worldguard.blacklist.target.Target;
 import com.sk89q.worldguard.blacklist.target.TargetMatcher;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -47,7 +48,7 @@ class MatcherIndex {
                 found.add(entry.getValue());
             }
         }
-        return found;
+        return Collections.synchronizedList(found);
     }
 
     public int size() {

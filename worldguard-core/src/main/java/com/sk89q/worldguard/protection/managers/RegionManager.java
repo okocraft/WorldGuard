@@ -42,7 +42,6 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -111,7 +110,9 @@ public final class RegionManager {
      */
     public void save() throws StorageException {
         index.setDirty(false);
-        store.saveAll(new HashSet<>(getFilteredValuesCopy()));
+        Set<ProtectedRegion> saved = ConcurrentHashMap.newKeySet();
+        saved.addAll(getFilteredValuesCopy());
+        store.saveAll(saved);
     }
 
     /**
@@ -362,7 +363,7 @@ public final class RegionManager {
 
         index.applyContaining(position, region -> names.add(region.getId()));
 
-        return names;
+        return Collections.synchronizedList(names);
     }
 
     /**
@@ -435,7 +436,7 @@ public final class RegionManager {
                 filteredValues.add(region);
             }
         }
-        return filteredValues;
+        return Collections.synchronizedList(filteredValues);
     }
 
 }

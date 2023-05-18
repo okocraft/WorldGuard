@@ -134,7 +134,7 @@ public class ChunkHashTable implements ConcurrentRegionIndex {
             }
 
             if (!positions.isEmpty()) {
-                executor.submit(new EnumerateRegions(positions));
+                executor.submit(new EnumerateRegions(Collections.synchronizedList(positions)));
             }
 
             lastState = null;

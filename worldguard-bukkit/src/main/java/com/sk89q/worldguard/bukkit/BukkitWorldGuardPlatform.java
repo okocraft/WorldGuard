@@ -54,6 +54,7 @@ import com.sk89q.worldguard.util.profile.resolver.CombinedProfileService;
 import com.sk89q.worldguard.util.profile.resolver.HttpRepositoryService;
 import com.sk89q.worldguard.util.profile.resolver.ProfileService;
 import io.papermc.lib.PaperLib;
+import java.util.Collections;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -253,7 +254,7 @@ public class BukkitWorldGuardPlatform implements WorldGuardPlatform {
             services.add(BukkitPlayerService.getInstance());
         }
         services.add(HttpRepositoryService.forMinecraft());
-        return new CacheForwardingService(new CombinedProfileService(services),
+        return new CacheForwardingService(new CombinedProfileService(Collections.synchronizedList(services)),
                 profileCache);
     }
 

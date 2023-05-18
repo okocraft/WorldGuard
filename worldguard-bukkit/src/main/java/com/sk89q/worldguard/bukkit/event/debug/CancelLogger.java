@@ -22,6 +22,7 @@ package com.sk89q.worldguard.bukkit.event.debug;
 import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,7 +30,7 @@ import java.util.List;
  */
 public class CancelLogger {
 
-    private List<CancelAttempt> entries = new ArrayList<>();
+    private List<CancelAttempt> entries = Collections.synchronizedList(new ArrayList<>());
 
     /**
      * Log a call.

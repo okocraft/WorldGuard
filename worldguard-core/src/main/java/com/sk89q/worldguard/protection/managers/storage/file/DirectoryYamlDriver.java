@@ -26,6 +26,7 @@ import com.sk89q.worldguard.protection.managers.storage.StorageException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -92,7 +93,7 @@ public class DirectoryYamlDriver implements RegionDriver {
             }
         }
 
-        return stores;
+        return Collections.synchronizedList(stores);
     }
 
 }

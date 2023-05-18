@@ -33,7 +33,6 @@ import com.sk89q.worldguard.util.Normal;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -65,7 +64,7 @@ public class RegionContainerImpl {
     private final Timer timer = new Timer("WorldGuard Region I/O");
     private final FlagRegistry flagRegistry;
 
-    private final Set<Normal> failingLoads = new HashSet<>();
+    private final Set<Normal> failingLoads = ConcurrentHashMap.newKeySet();
     private final Set<RegionManager> failingSaves = Collections.synchronizedSet(
             Collections.newSetFromMap(new WeakHashMap<>()));
 
@@ -226,7 +225,9 @@ public class RegionContainerImpl {
      * @return a set of region managers
      */
     public Set<RegionManager> getSaveFailures() {
-        return new HashSet<>(failingSaves);
+        Set<RegionManager> ret = ConcurrentHashMap.newKeySet();
+        ret.addAll(failingSaves);
+        return ret;
     }
 
     /**

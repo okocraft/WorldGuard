@@ -213,7 +213,7 @@ public class RegionLister implements Callable<Integer> {
                 + (filterByIntersecting != null ? " -s" : "")
                 + (idFilter != null ? " -i " + idFilter : "")
                 + " %page%";
-        PaginationBox box = new RegionListBox(title, cmd, perms, entries, world);
+        PaginationBox box = new RegionListBox(title, cmd, perms, Collections.synchronizedList(entries), world);
         sender.print(box.create(page));
 
         return page;

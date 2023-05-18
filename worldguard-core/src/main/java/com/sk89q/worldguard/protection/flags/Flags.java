@@ -42,7 +42,7 @@ import java.util.function.Consumer;
  */
 public final class Flags {
 
-    private static final List<String> INBUILT_FLAGS_LIST = new ArrayList<>();
+    private static final List<String> INBUILT_FLAGS_LIST = Collections.synchronizedList(new ArrayList<>());
     public static final List<String> INBUILT_FLAGS = Collections.unmodifiableList(INBUILT_FLAGS_LIST);
 
     // Overrides membership check

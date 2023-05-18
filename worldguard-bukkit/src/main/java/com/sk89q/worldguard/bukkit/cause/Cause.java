@@ -267,7 +267,7 @@ public final class Cause {
         private boolean indirect;
 
         private Builder(int expectedSize) {
-            this.causes = new ArrayList<>(expectedSize);
+            this.causes = Collections.synchronizedList(new ArrayList<>(expectedSize));
         }
 
         private void addAll(@Nullable Object... element) {

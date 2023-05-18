@@ -21,10 +21,10 @@ package com.sk89q.worldguard.util.command;
 
 import com.google.common.base.Predicate;
 
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -171,7 +171,7 @@ public class CommandFilter implements Predicate<String> {
         public Builder permit(String ... rules) {
             checkNotNull(rules);
             if (permitted == null) {
-                permitted = new HashSet<>();
+                permitted = ConcurrentHashMap.newKeySet();
             }
             permitted.addAll(Arrays.asList(rules));
             return this;
@@ -186,7 +186,7 @@ public class CommandFilter implements Predicate<String> {
         public Builder deny(String ... rules) {
             checkNotNull(rules);
             if (denied == null) {
-                denied = new HashSet<>();
+                denied = ConcurrentHashMap.newKeySet();
             }
             denied.addAll(Arrays.asList(rules));
             return this;
@@ -198,9 +198,15 @@ public class CommandFilter implements Predicate<String> {
          * @return a new command filter
          */
         public CommandFilter build() {
-            return new CommandFilter(
-                    permitted != null ? new HashSet<>(permitted) : null,
-                    denied != null ? new HashSet<>(denied) : null);
+            Set<String> permitted = this.permitted != null ? ConcurrentHashMap.newKeySet() : null;
+            if (permitted != null) {
+                permitted.addAll(this.permitted);
+            }
+            Set<String> denied = this.denied != null ? ConcurrentHashMap.newKeySet() : null;
+            if (denied != null) {
+                denied.addAll(this.denied);
+            }
+            return new CommandFilter(permitted, denied);
         }
     }
 

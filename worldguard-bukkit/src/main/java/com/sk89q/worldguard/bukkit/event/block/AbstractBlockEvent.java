@@ -25,6 +25,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.sk89q.worldguard.bukkit.cause.Cause;
 import com.sk89q.worldguard.bukkit.event.BulkEvent;
 import com.sk89q.worldguard.bukkit.event.DelegateEvent;
+import java.util.Collections;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -85,7 +86,7 @@ abstract class AbstractBlockEvent extends DelegateEvent implements BulkEvent {
     private static List<Block> createList(Block block) {
         List<Block> blocks = new ArrayList<>();
         blocks.add(block);
-        return blocks;
+        return Collections.synchronizedList(blocks);
     }
 
     /**

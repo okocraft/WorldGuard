@@ -24,6 +24,7 @@ import com.sk89q.worldguard.protection.managers.storage.RegionDriver;
 import com.sk89q.worldguard.protection.managers.storage.StorageException;
 import com.sk89q.worldguard.util.io.Closer;
 import com.sk89q.worldguard.util.sql.DataSourceConfig;
+import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
@@ -89,7 +90,7 @@ public class SQLDriver implements RegionDriver {
             while (rs.next()) {
                 stores.add(get(rs.getString(1)));
             }
-            return stores;
+            return Collections.synchronizedList(stores);
         } catch (SQLException e) {
             throw new StorageException("Failed to fetch list of worlds", e);
         } finally {

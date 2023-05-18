@@ -22,8 +22,8 @@ package com.sk89q.worldguard.blacklist;
 import com.sk89q.worldguard.blacklist.event.BlacklistEvent;
 import com.sk89q.worldguard.blacklist.logger.LoggerHandler;
 
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class BlacklistLoggerHandler implements LoggerHandler {
 
@@ -31,7 +31,7 @@ public class BlacklistLoggerHandler implements LoggerHandler {
      * List of logger handlers.
      */
     private Set<LoggerHandler> handlers
-            = new HashSet<>();
+            = ConcurrentHashMap.newKeySet();
 
     /**
      * Add a handler.

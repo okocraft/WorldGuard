@@ -66,7 +66,7 @@ public class BlacklistEntry {
      * @param ignoreGroups the ignoreGroups to set
      */
     public void setIgnoreGroups(String[] ignoreGroups) {
-        Set<String> ignoreGroupsSet = new HashSet<>();
+        Set<String> ignoreGroupsSet = ConcurrentHashMap.newKeySet();
         for (String group : ignoreGroups) {
             ignoreGroupsSet.add(group.toLowerCase());
         }
@@ -77,7 +77,7 @@ public class BlacklistEntry {
      * @param ignorePermissions the ignorePermissions to set
      */
     public void setIgnorePermissions(String[] ignorePermissions) {
-        Set<String> ignorePermissionsSet = new HashSet<>();
+        Set<String> ignorePermissionsSet = ConcurrentHashMap.newKeySet();
         Collections.addAll(ignorePermissionsSet, ignorePermissions);
         this.ignorePermissions = ignorePermissionsSet;
     }
@@ -147,7 +147,7 @@ public class BlacklistEntry {
      * @return The actions for the given event
      */
     public List<Action> getActions(Class<? extends BlacklistEvent> eventCls) {
-        return actions.computeIfAbsent(eventCls, k -> new ArrayList<>());
+        return actions.computeIfAbsent(eventCls, k -> Collections.synchronizedList(new ArrayList<>()));
     }
 
     /**

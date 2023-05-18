@@ -33,6 +33,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -43,9 +44,9 @@ class RegionInserter {
     private final DataSourceConfig config;
     private final Connection conn;
     private final int worldId;
-    private final List<ProtectedRegion> all = new ArrayList<>();
-    private final List<ProtectedCuboidRegion> cuboids = new ArrayList<>();
-    private final List<ProtectedPolygonalRegion> polygons = new ArrayList<>();
+    private final List<ProtectedRegion> all = Collections.synchronizedList(new ArrayList<>());
+    private final List<ProtectedCuboidRegion> cuboids = Collections.synchronizedList(new ArrayList<>());
+    private final List<ProtectedPolygonalRegion> polygons = Collections.synchronizedList(new ArrayList<>());
 
     RegionInserter(DataUpdater updater) {
         this.config = updater.config;

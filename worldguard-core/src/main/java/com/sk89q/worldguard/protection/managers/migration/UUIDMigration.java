@@ -32,7 +32,6 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -56,7 +55,7 @@ public class UUIDMigration extends AbstractMigration {
     private final ProfileService profileService;
     private final FlagRegistry flagRegistry;
     private final ConcurrentMap<String, UUID> resolvedNames = new ConcurrentHashMap<>();
-    private final Set<String> unresolvedNames = new HashSet<>();
+    private final Set<String> unresolvedNames = ConcurrentHashMap.newKeySet();
     private boolean keepUnresolvedNames = true;
 
     /**
@@ -111,7 +110,9 @@ public class UUIDMigration extends AbstractMigration {
 
                 // Don't lookup names that we already looked up for previous
                 // worlds -- note: all names are lowercase in these collections
-                Set<String> lookupNames = new HashSet<>(names);
+                Set<String> lookupNames = ConcurrentHashMap.newKeySet();
+                lookupNames.addAll(names);
+
                 lookupNames.removeAll(resolvedNames.keySet());
 
                 // Ask Mojang for names
@@ -166,7 +167,7 @@ public class UUIDMigration extends AbstractMigration {
      * @return a set of names
      */
     private static Set<String> getNames(Collection<ProtectedRegion> regions) {
-        Set<String> names = new HashSet<>();
+        Set<String> names = ConcurrentHashMap.newKeySet();
         for (ProtectedRegion region : regions) {
             // Names are already lower case
             names.addAll(region.getOwners().getPlayers());

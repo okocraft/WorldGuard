@@ -44,7 +44,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -86,7 +85,9 @@ class DataLoader {
 
         RegionDatabaseUtils.relinkParents(loaded, parentSets);
 
-        return new HashSet<>(loaded.values());
+        Set<ProtectedRegion> ret = ConcurrentHashMap.newKeySet();
+        ret.addAll(loaded.values());
+        return ret;
     }
 
     private void loadCuboids() throws SQLException {

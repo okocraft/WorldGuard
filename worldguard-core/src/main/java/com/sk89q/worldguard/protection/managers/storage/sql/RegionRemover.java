@@ -28,6 +28,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 class RegionRemover {
@@ -35,9 +36,9 @@ class RegionRemover {
     private final DataSourceConfig config;
     private final Connection conn;
     private final int worldId;
-    private final List<String> regionQueue = new ArrayList<>();
-    private final List<String> cuboidGeometryQueue = new ArrayList<>();
-    private final List<String> polygonGeometryQueue = new ArrayList<>();
+    private final List<String> regionQueue = Collections.synchronizedList(new ArrayList<>());
+    private final List<String> cuboidGeometryQueue = Collections.synchronizedList(new ArrayList<>());
+    private final List<String> polygonGeometryQueue = Collections.synchronizedList(new ArrayList<>());
 
     RegionRemover(DataUpdater updater) {
         this.config = updater.config;

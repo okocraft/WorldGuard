@@ -46,11 +46,11 @@ import com.sk89q.worldguard.protection.util.RegionCollectionConsumer;
 
 import java.util.Collection;
 import java.util.EnumMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
 /**
@@ -554,7 +554,7 @@ public class RegionQuery {
                     Map<QueryOption, ApplicableRegionSet> newCache = new EnumMap<>(QueryOption.class);
                     ApplicableRegionSet noParResult = manager.getApplicableRegions(location.toVector().toBlockPoint(), QueryOption.NONE);
                     Set<ProtectedRegion> noParRegions = noParResult.getRegions();
-                    Set<ProtectedRegion> regions = new HashSet<>();
+                    Set<ProtectedRegion> regions = ConcurrentHashMap.newKeySet();
                     noParRegions.forEach(new RegionCollectionConsumer(regions, true)::apply);
                     ApplicableRegionSet result = new RegionResultSet(regions, manager.getRegion("__global__"));
 
@@ -570,7 +570,7 @@ public class RegionQuery {
                 }
 
                 cache.computeIfAbsent(QueryOption.COMPUTE_PARENTS, k -> {
-                    Set<ProtectedRegion> regions = new HashSet<>();
+                    Set<ProtectedRegion> regions = ConcurrentHashMap.newKeySet();
                     ApplicableRegionSet result = cache.get(QueryOption.SORT);
                     boolean sorted = true;
 

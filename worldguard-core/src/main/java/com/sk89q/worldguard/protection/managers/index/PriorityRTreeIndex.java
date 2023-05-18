@@ -22,13 +22,13 @@ package com.sk89q.worldguard.protection.managers.index;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegionMBRConverter;
+import java.util.concurrent.ConcurrentHashMap;
 import org.khelekore.prtree.MBR;
 import org.khelekore.prtree.MBRConverter;
 import org.khelekore.prtree.PRTree;
 import org.khelekore.prtree.SimpleMBR;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -68,7 +68,7 @@ public class PriorityRTreeIndex extends HashMapIndex {
 
     @Override
     public void applyContaining(BlockVector3 position, Predicate<ProtectedRegion> consumer) {
-        Set<ProtectedRegion> seen = new HashSet<>();
+        Set<ProtectedRegion> seen = ConcurrentHashMap.newKeySet();
         MBR pointMBR = new SimpleMBR(position.getX(), position.getX(), position.getY(), position.getY(), position.getZ(), position.getZ());
 
         for (ProtectedRegion region : tree.find(pointMBR)) {
@@ -86,7 +86,7 @@ public class PriorityRTreeIndex extends HashMapIndex {
         BlockVector3 min = region.getMinimumPoint().floor();
         BlockVector3 max = region.getMaximumPoint().ceil();
 
-        Set<ProtectedRegion> candidates = new HashSet<>();
+        Set<ProtectedRegion> candidates = ConcurrentHashMap.newKeySet();
         MBR pointMBR = new SimpleMBR(min.getX(), max.getX(), min.getY(), max.getY(), min.getZ(), max.getZ());
 
         for (ProtectedRegion found : tree.find(pointMBR)) {

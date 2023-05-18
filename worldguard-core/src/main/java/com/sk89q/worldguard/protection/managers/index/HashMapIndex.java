@@ -33,7 +33,6 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion.CircularInheritan
 import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,7 +51,7 @@ import java.util.logging.Level;
 public class HashMapIndex extends AbstractRegionIndex implements ConcurrentRegionIndex {
 
     private final ConcurrentMap<String, ProtectedRegion> regions = new ConcurrentHashMap<>();
-    private Set<ProtectedRegion> removed = new HashSet<>();
+    private Set<ProtectedRegion> removed = ConcurrentHashMap.newKeySet();
     private final Object lock = new Object();
 
     /**
@@ -148,7 +147,7 @@ public class HashMapIndex extends AbstractRegionIndex implements ConcurrentRegio
         checkNotNull(id);
         checkNotNull(strategy);
 
-        Set<ProtectedRegion> removedSet = new HashSet<>();
+        Set<ProtectedRegion> removedSet = ConcurrentHashMap.newKeySet();
 
         synchronized (lock) {
             ProtectedRegion removed = regions.remove(normalize(id));
@@ -240,7 +239,7 @@ public class HashMapIndex extends AbstractRegionIndex implements ConcurrentRegio
     @Override
     public RegionDifference getAndClearDifference() {
         synchronized (lock) {
-            Set<ProtectedRegion> changed = new HashSet<>();
+            Set<ProtectedRegion> changed = ConcurrentHashMap.newKeySet();
             Set<ProtectedRegion> removed = this.removed;
 
             for (ProtectedRegion region : regions.values()) {
@@ -250,7 +249,7 @@ public class HashMapIndex extends AbstractRegionIndex implements ConcurrentRegio
                 }
             }
 
-            this.removed = new HashSet<>();
+            this.removed = ConcurrentHashMap.newKeySet();
 
             return new RegionDifference(changed, removed);
         }

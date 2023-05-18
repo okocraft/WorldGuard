@@ -25,13 +25,14 @@ import com.sk89q.worldguard.protection.flags.Flag;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.util.io.Closer;
 import com.sk89q.worldguard.util.sql.DataSourceConfig;
+import java.util.Collections;
+import java.util.concurrent.ConcurrentHashMap;
 import org.yaml.snakeyaml.Yaml;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,16 +51,16 @@ class RegionUpdater {
     private final int worldId;
     private final DomainTableCache domainTableCache;
 
-    private final Set<String> userNames = new HashSet<>();
-    private final Set<UUID> userUuids = new HashSet<>();
-    private final Set<String> groupNames = new HashSet<>();
+    private final Set<String> userNames = ConcurrentHashMap.newKeySet();
+    private final Set<UUID> userUuids = ConcurrentHashMap.newKeySet();
+    private final Set<String> groupNames = ConcurrentHashMap.newKeySet();
 
     private final Yaml yaml = SQLRegionDatabase.createYaml();
 
-    private final List<ProtectedRegion> typesToUpdate = new ArrayList<>();
-    private final List<ProtectedRegion> parentsToSet = new ArrayList<>();
-    private final List<ProtectedRegion> flagsToReplace = new ArrayList<>();
-    private final List<ProtectedRegion> domainsToReplace = new ArrayList<>();
+    private final List<ProtectedRegion> typesToUpdate = Collections.synchronizedList(new ArrayList<>());
+    private final List<ProtectedRegion> parentsToSet = Collections.synchronizedList(new ArrayList<>());
+    private final List<ProtectedRegion> flagsToReplace = Collections.synchronizedList(new ArrayList<>());
+    private final List<ProtectedRegion> domainsToReplace = Collections.synchronizedList(new ArrayList<>());
 
     RegionUpdater(DataUpdater updater) {
         this.config = updater.config;

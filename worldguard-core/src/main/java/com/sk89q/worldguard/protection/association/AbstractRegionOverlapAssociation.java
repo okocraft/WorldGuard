@@ -26,10 +26,10 @@ import com.sk89q.worldguard.protection.FlagValueCalculator;
 import com.sk89q.worldguard.protection.flags.Flags;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -49,7 +49,7 @@ public abstract class AbstractRegionOverlapAssociation implements RegionAssociab
     protected void calcMaxPriority() {
         checkNotNull(source);
         int best = 0;
-        Set<ProtectedRegion> bestRegions = new HashSet<>();
+        Set<ProtectedRegion> bestRegions = ConcurrentHashMap.newKeySet();
         for (ProtectedRegion region : source) {
             int priority = region.getPriority();
             if (priority > best) {

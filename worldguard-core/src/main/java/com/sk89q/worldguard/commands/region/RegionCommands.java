@@ -83,10 +83,10 @@ import com.sk89q.worldguard.util.logging.LoggerToChatHandler;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -501,7 +501,8 @@ public final class RegionCommands extends RegionCommandsBase {
         WorldConfiguration wcfg = WorldGuard.getInstance().getPlatform().getGlobalStateManager().get(player.getWorld());
 
         // We have to check whether this region violates the space of any other region
-        Set<ProtectedRegion> regionSet = new HashSet<>(manager.getApplicableRegions(region).getRegions());
+        Set<ProtectedRegion> regionSet = ConcurrentHashMap.newKeySet();
+        regionSet.addAll(manager.getApplicableRegions(region).getRegions());
         regionSet.remove(existing);
         ApplicableRegionSet regions = new RegionResultSet(regionSet, manager.getRegion("__global__"));
 
@@ -1285,7 +1286,7 @@ public final class RegionCommands extends RegionCommandsBase {
                 }
             }
 
-            AsyncCommandBuilder.wrap(new RegionManagerLoader(managers), sender)
+            AsyncCommandBuilder.wrap(new RegionManagerLoader(Collections.synchronizedList(managers)), sender)
                     .registerWithSupervisor(worldGuard.getSupervisor(), LegacyComponentSerializer.legacy().serialize(
                             WorldEditText.format(TranslatableComponent.of(
                                             "worldguard.command.region.load.loading-all-world-region-data"),
@@ -1358,7 +1359,7 @@ public final class RegionCommands extends RegionCommandsBase {
                 }
             }
 
-            AsyncCommandBuilder.wrap(new RegionManagerSaver(managers), sender)
+            AsyncCommandBuilder.wrap(new RegionManagerSaver(Collections.synchronizedList(managers)), sender)
                     .registerWithSupervisor(worldGuard.getSupervisor(), LegacyComponentSerializer.legacy().serialize(
                             WorldEditText.format(TranslatableComponent.of(
                                             "worldguard.command.region.save.saving-all-world-region-data"),

@@ -39,6 +39,7 @@ import com.sk89q.worldguard.bukkit.internal.TargetMatcherSet;
 import com.sk89q.worldguard.chest.ChestProtection;
 import com.sk89q.worldguard.commands.CommandUtils;
 import com.sk89q.worldguard.config.YamlWorldConfiguration;
+import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.potion.PotionEffectType;
 import org.yaml.snakeyaml.error.YAMLException;
@@ -47,7 +48,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -104,7 +104,7 @@ public class BukkitWorldConfiguration extends YamlWorldConfiguration {
         List<String> inputs = parentConfig.getStringList(node, null);
 
         if (inputs == null || inputs.isEmpty()) {
-            parentConfig.setProperty(node, new ArrayList<String>());
+            parentConfig.setProperty(node, Collections.synchronizedList(new ArrayList<String>()));
         }
 
         if (config.getProperty(node) != null) {
@@ -165,7 +165,7 @@ public class BukkitWorldConfiguration extends YamlWorldConfiguration {
 
         useMaxPriorityAssociation = getBoolean("protection.use-max-priority-association", false);
 
-        blockPotions = new HashSet<>();
+        blockPotions = ConcurrentHashMap.newKeySet();
         for (String potionName : getStringList("gameplay.block-potions", null)) {
             PotionEffectType effect = PotionEffectType.getByName(potionName);
 
@@ -194,7 +194,8 @@ public class BukkitWorldConfiguration extends YamlWorldConfiguration {
         noPhysicsSand = getBoolean("physics.no-physics-sand", false);
         ropeLadders = getBoolean("physics.vine-like-rope-ladders", false);
         allowPortalAnywhere = getBoolean("physics.allow-portal-anywhere", false);
-        preventWaterDamage = new HashSet<>(convertLegacyBlocks(getStringList("physics.disable-water-damage-blocks", null)));
+        preventWaterDamage = ConcurrentHashMap.newKeySet();
+        preventWaterDamage.addAll(convertLegacyBlocks(getStringList("physics.disable-water-damage-blocks", null)));
 
         blockTNTExplosions = getBoolean("ignition.block-tnt", false);
         blockTNTBlockDamage = getBoolean("ignition.block-tnt-block-damage", false);
@@ -202,8 +203,11 @@ public class BukkitWorldConfiguration extends YamlWorldConfiguration {
 
         preventLavaFire = getBoolean("fire.disable-lava-fire-spread", false);
         disableFireSpread = getBoolean("fire.disable-all-fire-spread", false);
-        disableFireSpreadBlocks = new HashSet<>(convertLegacyBlocks(getStringList("fire.disable-fire-spread-blocks", null)));
-        allowedLavaSpreadOver = new HashSet<>(convertLegacyBlocks(getStringList("fire.lava-spread-blocks", null)));
+        disableFireSpreadBlocks = ConcurrentHashMap.newKeySet();
+        disableFireSpreadBlocks.addAll(convertLegacyBlocks(getStringList("fire.disable-fire-spread-blocks", null)));
+
+        allowedLavaSpreadOver = ConcurrentHashMap.newKeySet();
+        allowedLavaSpreadOver.addAll(convertLegacyBlocks(getStringList("fire.lava-spread-blocks", null)));
 
         blockCreeperExplosions = getBoolean("mobs.block-creeper-explosions", false);
         blockCreeperBlockDamage = getBoolean("mobs.block-creeper-block-damage", false);
@@ -257,7 +261,9 @@ public class BukkitWorldConfiguration extends YamlWorldConfiguration {
         disableCreatureTurtleEggTrampling = getBoolean("turtle-egg.disable-creature-trampling", false);
         disablePlayerTurtleEggTrampling = getBoolean("turtle-egg.disable-player-trampling", false);
 
-        disallowedLightningBlocks = new HashSet<>(convertLegacyBlocks(getStringList("weather.prevent-lightning-strike-blocks", null)));
+        disallowedLightningBlocks = ConcurrentHashMap.newKeySet();
+        disallowedLightningBlocks.addAll(convertLegacyBlocks(getStringList("weather.prevent-lightning-strike-blocks", null)));
+
         preventLightningFire = getBoolean("weather.disable-lightning-strike-fire", false);
         disableThunder = getBoolean("weather.disable-thunderstorm", false);
         disableWeather = getBoolean("weather.disable-weather", false);
@@ -282,7 +288,9 @@ public class BukkitWorldConfiguration extends YamlWorldConfiguration {
         disableSoilDehydration = getBoolean("dynamics.disable-soil-dehydration", false);
         disableCoralBlockFade = getBoolean("dynamics.disable-coral-block-fade", false);
         disableCopperBlockFade = getBoolean("dynamics.disable-copper-block-fade", false);
-        allowedSnowFallOver = new HashSet<>(convertLegacyBlocks(getStringList("dynamics.snow-fall-blocks", null)));
+
+        allowedSnowFallOver = ConcurrentHashMap.newKeySet();
+        allowedSnowFallOver.addAll(convertLegacyBlocks(getStringList("dynamics.snow-fall-blocks", null)));
 
         useRegions = getBoolean("regions.enable", true);
         regionInvinciblityRemovesMobs = getBoolean("regions.invincibility-removes-mobs", false);
@@ -316,7 +324,7 @@ public class BukkitWorldConfiguration extends YamlWorldConfiguration {
         // buyOnClaim = getBoolean("iconomy.buy-on-claim", false);
         // buyOnClaimPrice = getDouble("iconomy.buy-on-claim-price", 1.0);
 
-        blockCreatureSpawn = new HashSet<>();
+        blockCreatureSpawn = ConcurrentHashMap.newKeySet();
         for (String creatureName : getStringList("mobs.block-creature-spawn", null)) {
             EntityType creature = EntityTypes.get(creatureName.toLowerCase());
 

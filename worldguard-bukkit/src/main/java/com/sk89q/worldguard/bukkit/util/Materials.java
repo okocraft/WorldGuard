@@ -22,6 +22,7 @@ package com.sk89q.worldguard.bukkit.util;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.sk89q.worldguard.protection.flags.Flags;
+import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Material;
 import org.bukkit.Tag;
 import org.bukkit.entity.EntityType;
@@ -31,7 +32,6 @@ import org.bukkit.potion.PotionEffectType;
 import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.EnumMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -50,7 +50,7 @@ public final class Materials {
 
     private static final BiMap<EntityType, Material> ENTITY_ITEMS = HashBiMap.create();
     private static final Map<Material, Integer> MATERIAL_FLAGS = new EnumMap<>(Material.class);
-    private static final Set<PotionEffectType> DAMAGE_EFFECTS = new HashSet<>();
+    private static final Set<PotionEffectType> DAMAGE_EFFECTS = ConcurrentHashMap.newKeySet();
 
     private static void putMaterialTag(Tag<Material> tag, Integer value) {
         tag.getValues().forEach(mat -> MATERIAL_FLAGS.put(mat, value));
