@@ -24,6 +24,7 @@ import com.sk89q.worldguard.protection.managers.storage.RegionDriver;
 import com.sk89q.worldguard.protection.managers.storage.StorageException;
 import com.sk89q.worldguard.util.io.Closer;
 import com.sk89q.worldguard.util.sql.DataSourceConfig;
+import java.util.concurrent.ConcurrentHashMap;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
 import org.flywaydb.core.api.MigrationVersion;
@@ -33,7 +34,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -148,7 +148,7 @@ public class SQLDriver implements RegionDriver {
             }
 
             // Our placeholders
-            Map<String, String> placeHolders = new HashMap<>();
+            Map<String, String> placeHolders = new ConcurrentHashMap<>();
             placeHolders.put("tablePrefix", config.getTablePrefix());
 
             Flyway flyway = new Flyway();

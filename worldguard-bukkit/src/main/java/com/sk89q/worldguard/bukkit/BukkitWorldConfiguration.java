@@ -39,6 +39,7 @@ import com.sk89q.worldguard.bukkit.internal.TargetMatcherSet;
 import com.sk89q.worldguard.chest.ChestProtection;
 import com.sk89q.worldguard.commands.CommandUtils;
 import com.sk89q.worldguard.config.YamlWorldConfiguration;
+import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.potion.PotionEffectType;
 import org.yaml.snakeyaml.error.YAMLException;
 
@@ -46,7 +47,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -300,7 +300,7 @@ public class BukkitWorldConfiguration extends YamlWorldConfiguration {
         boundedLocationFlags = getBoolean("regions.location-flags-only-inside-regions", false);
 
         maxRegionCountPerPlayer = getInt("regions.max-region-count-per-player.default", 7);
-        maxRegionCounts = new HashMap<>();
+        maxRegionCounts = new ConcurrentHashMap<>();
         maxRegionCounts.put(null, maxRegionCountPerPlayer);
 
         for (String key : getKeys("regions.max-region-count-per-player")) {

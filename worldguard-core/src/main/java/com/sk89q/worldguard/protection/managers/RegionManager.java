@@ -37,11 +37,11 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.protection.regions.RegionQuery.QueryOption;
 import com.sk89q.worldguard.util.Normal;
 
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -185,7 +185,7 @@ public final class RegionManager {
      * @return a map of regions
      */
     public Map<String, ProtectedRegion> getRegions() {
-        Map<String, ProtectedRegion> map = new HashMap<>();
+        Map<String, ProtectedRegion> map = new ConcurrentHashMap<>();
         for (ProtectedRegion region : index.values()) {
             map.put(Normal.normalize(region.getId()), region);
         }

@@ -22,8 +22,8 @@ package com.sk89q.worldguard.protection.flags;
 import com.sk89q.worldedit.math.Vector3;
 
 import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Stores a vector.
@@ -82,7 +82,7 @@ public class VectorFlag extends Flag<Vector3> {
 
     @Override
     public Object marshal(Vector3 o) {
-        Map<String, Object> vec = new HashMap<>();
+        Map<String, Object> vec = new ConcurrentHashMap<>();
         vec.put("x", o.getX());
         vec.put("y", o.getY());
         vec.put("z", o.getZ());

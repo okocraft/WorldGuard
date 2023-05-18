@@ -21,6 +21,7 @@ package com.sk89q.worldguard.bukkit.util;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.PluginClassLoader;
@@ -28,7 +29,6 @@ import org.bukkit.plugin.java.PluginClassLoader;
 import javax.annotation.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -91,7 +91,7 @@ public class ClassSourceValidator {
             return ImmutableMap.of();
         }
 
-        Map<Class<?>, Plugin> mismatches = new HashMap<>();
+        Map<Class<?>, Plugin> mismatches = new ConcurrentHashMap<>();
 
         for (Plugin target : Bukkit.getPluginManager().getPlugins()) {
             if (target == plugin) {

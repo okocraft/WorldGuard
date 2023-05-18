@@ -30,13 +30,13 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.session.MoveType;
 import com.sk89q.worldguard.session.Session;
 import com.sk89q.worldguard.session.handler.Handler;
+import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 
 
 import javax.annotation.Nullable;
 import java.security.CodeSource;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -45,7 +45,7 @@ class TimedHandlerFactory extends Handler.Factory<Handler> {
 
     private static final TimingManager TIMINGS = TimingManager.of(WorldGuardPlugin.inst());
     private static final MCTiming UNKNOWN_SOURCE = TIMINGS.of("Third-Party Session Handlers");
-    private static final Map<CodeSource, TimingManager> PLUGIN_SOURCES = new HashMap<>();
+    private static final Map<CodeSource, TimingManager> PLUGIN_SOURCES = new ConcurrentHashMap<>();
 
     private final Handler.Factory<?> factory;
     private final MCTiming timing;

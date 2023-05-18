@@ -36,6 +36,7 @@ import com.sk89q.worldguard.protection.regions.ProtectedPolygonalRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.util.io.Closer;
 import com.sk89q.worldguard.util.sql.DataSourceConfig;
+import java.util.concurrent.ConcurrentHashMap;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.error.YAMLException;
 
@@ -43,7 +44,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -62,8 +62,8 @@ class DataLoader {
     final int worldId;
     final FlagRegistry flagRegistry;
 
-    private final Map<String, ProtectedRegion> loaded = new HashMap<>();
-    private final Map<ProtectedRegion, String> parentSets = new HashMap<>();
+    private final Map<String, ProtectedRegion> loaded = new ConcurrentHashMap<>();
+    private final Map<ProtectedRegion, String> parentSets = new ConcurrentHashMap<>();
     private final Yaml yaml = SQLRegionDatabase.createYaml();
 
     DataLoader(SQLRegionDatabase regionStore, Connection conn, FlagRegistry flagRegistry) throws SQLException {

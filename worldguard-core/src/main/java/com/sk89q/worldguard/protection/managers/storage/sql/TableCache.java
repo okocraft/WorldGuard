@@ -24,6 +24,7 @@ import com.sk89q.worldguard.internal.util.sql.StatementUtils;
 import com.sk89q.worldguard.util.io.Closer;
 import com.sk89q.worldguard.util.sql.DataSourceConfig;
 
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -32,7 +33,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -53,7 +53,7 @@ abstract class TableCache<V> {
     private static final int MAX_NUMBER_PER_QUERY = 100;
     private static final Object LOCK = new Object();
 
-    private final Map<V, Integer> cache = new HashMap<>();
+    private final Map<V, Integer> cache = new ConcurrentHashMap<>();
     private final DataSourceConfig config;
     private final Connection conn;
     private final String tableName;

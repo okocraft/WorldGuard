@@ -28,8 +28,8 @@ import com.sk89q.worldguard.session.handler.WaterBreathing;
 import com.sk89q.worldedit.util.report.Unreported;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 /**
@@ -80,7 +80,7 @@ public abstract class ConfigurationManager {
     public boolean disableDefaultBypass;
     public boolean announceBypassStatus;
 
-    @Unreported public Map<String, String> hostKeys = new HashMap<>();
+    @Unreported public Map<String, String> hostKeys = new ConcurrentHashMap<>();
     public boolean hostKeysAllowFMLClients;
 
     /**

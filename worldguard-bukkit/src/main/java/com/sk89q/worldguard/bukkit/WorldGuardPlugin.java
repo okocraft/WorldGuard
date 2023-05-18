@@ -75,6 +75,7 @@ import com.sk89q.worldguard.protection.managers.storage.file.DirectoryYamlDriver
 import com.sk89q.worldguard.protection.managers.storage.sql.SQLDriver;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.util.logging.RecordMessagePrefixer;
+import java.util.concurrent.ConcurrentHashMap;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.DrilldownPie;
 import org.bstats.charts.SimplePie;
@@ -94,7 +95,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -232,8 +232,8 @@ public class WorldGuardPlugin extends JavaPlugin {
         }));
         metrics.addCustomChart(new DrilldownPie("blacklist", () -> {
             int empty = 0;
-            Map<String, Integer> blacklistMap = new HashMap<>();
-            Map<String, Integer> whitelistMap = new HashMap<>();
+            Map<String, Integer> blacklistMap = new ConcurrentHashMap<>();
+            Map<String, Integer> whitelistMap = new ConcurrentHashMap<>();
             for (BukkitWorldConfiguration worldConfig : platform.getGlobalStateManager().getWorldConfigs()) {
                 Blacklist blacklist = worldConfig.getBlacklist();
                 if (blacklist != null && !blacklist.isEmpty()) {
@@ -245,8 +245,8 @@ public class WorldGuardPlugin extends JavaPlugin {
                     empty++;
                 }
             }
-            Map<String, Map<String, Integer>> blacklistCounts = new HashMap<>();
-            Map<String, Integer> emptyMap = new HashMap<>();
+            Map<String, Map<String, Integer>> blacklistCounts = new ConcurrentHashMap<>();
+            Map<String, Integer> emptyMap = new ConcurrentHashMap<>();
             emptyMap.put("empty", empty);
             blacklistCounts.put("empty", emptyMap);
             blacklistCounts.put("blacklist", blacklistMap);

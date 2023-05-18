@@ -39,6 +39,7 @@ import com.sk89q.worldguard.protection.regions.GlobalProtectedRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedPolygonalRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import java.util.concurrent.ConcurrentHashMap;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.DumperOptions.FlowStyle;
 import org.yaml.snakeyaml.Yaml;
@@ -51,7 +52,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -112,7 +112,7 @@ public class YamlRegionFile implements RegionDatabase {
 
     @Override
     public Set<ProtectedRegion> loadAll(FlagRegistry flagRegistry) throws StorageException {
-        Map<String, ProtectedRegion> loaded = new HashMap<>();
+        Map<String, ProtectedRegion> loaded = new ConcurrentHashMap<>();
 
         YAMLProcessor config = createYamlProcessor(file);
         try {
@@ -201,7 +201,7 @@ public class YamlRegionFile implements RegionDatabase {
         Map<String, Object> map = regionsNode.getMap();
 
         for (ProtectedRegion region : regions) {
-            Map<String, Object> nodeMap = new HashMap<>();
+            Map<String, Object> nodeMap = new ConcurrentHashMap<>();
             map.put(region.getId(), nodeMap);
             YAMLNode node = new YAMLNode(nodeMap, false);
 
@@ -218,7 +218,7 @@ public class YamlRegionFile implements RegionDatabase {
 
                 List<Map<String, Object>> points = new ArrayList<>();
                 for (BlockVector2 point : poly.getPoints()) {
-                    Map<String, Object> data = new HashMap<>();
+                    Map<String, Object> data = new ConcurrentHashMap<>();
                     data.put("x", point.getBlockX());
                     data.put("z", point.getBlockZ());
                     points.add(data);
@@ -298,7 +298,7 @@ public class YamlRegionFile implements RegionDatabase {
     }
 
     private Map<String, Object> getDomainData(DefaultDomain domain) {
-        Map<String, Object> domainData = new HashMap<>();
+        Map<String, Object> domainData = new ConcurrentHashMap<>();
 
         setDomainData(domainData, "players", domain.getPlayers());
         setDomainData(domainData, "unique-ids", domain.getUniqueIds());

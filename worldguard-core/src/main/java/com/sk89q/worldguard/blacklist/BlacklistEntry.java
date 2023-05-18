@@ -25,6 +25,7 @@ import com.sk89q.worldguard.blacklist.action.ActionResult;
 import com.sk89q.worldguard.blacklist.event.BlacklistEvent;
 import com.google.common.cache.LoadingCache;
 
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 import java.util.*;
 
@@ -33,7 +34,7 @@ public class BlacklistEntry {
     private Blacklist blacklist;
     private Set<String> ignoreGroups;
     private Set<String> ignorePermissions;
-    private Map<Class<? extends BlacklistEvent>, List<Action>> actions = new HashMap<>();
+    private Map<Class<? extends BlacklistEvent>, List<Action>> actions = new ConcurrentHashMap<>();
 
     private String message;
     private String comment;

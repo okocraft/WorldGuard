@@ -34,8 +34,8 @@ import com.sk89q.worldguard.util.sql.DataSourceConfig;
 import com.sk89q.worldguard.util.translation.TranslationAdder;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class YamlConfigurationManager extends ConfigurationManager {
 
@@ -77,10 +77,10 @@ public abstract class YamlConfigurationManager extends ConfigurationManager {
         deopOnJoin = config.getBoolean("security.deop-everyone-on-join", false);
         blockInGameOp = config.getBoolean("security.block-in-game-op-command", false);
 
-        hostKeys = new HashMap<>();
+        hostKeys = new ConcurrentHashMap<>();
         Object hostKeysRaw = config.getProperty("host-keys");
         if (!(hostKeysRaw instanceof Map)) {
-            config.setProperty("host-keys", new HashMap<String, String>());
+            config.setProperty("host-keys", new ConcurrentHashMap<String, String>());
         } else {
             for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) hostKeysRaw).entrySet()) {
                 String key = String.valueOf(entry.getKey());

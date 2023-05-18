@@ -28,8 +28,8 @@ import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.internal.permission.RegionPermissionModel;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class LocationFlag extends Flag<Location> {
 
@@ -126,7 +126,7 @@ public class LocationFlag extends Flag<Location> {
     @Override
     public Object marshal(Location o) {
         Vector3 position = o.toVector();
-        Map<String, Object> vec = new HashMap<>();
+        Map<String, Object> vec = new ConcurrentHashMap<>();
         if (o instanceof LazyLocation) {
             vec.put("world", ((LazyLocation) o).getWorldName());
         } else {

@@ -33,12 +33,12 @@ import com.sk89q.worldguard.protection.flags.StateFlag.State;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.protection.util.NormativeOrders;
 
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -252,8 +252,8 @@ public class FlagValueCalculator {
         checkNotNull(flag);
         checkNotNull(key);
 
-        Map<ProtectedRegion, V> consideredValues = new HashMap<>();
-        Map<ProtectedRegion, V> fallbackValues = new HashMap<>();
+        Map<ProtectedRegion, V> consideredValues = new ConcurrentHashMap<>();
+        Map<ProtectedRegion, V> fallbackValues = new ConcurrentHashMap<>();
         int minimumPriority = Integer.MIN_VALUE;
         Set<ProtectedRegion> ignoredParents = new HashSet<>();
 
@@ -394,7 +394,7 @@ public class FlagValueCalculator {
 
         int minimumPriority = Integer.MIN_VALUE;
 
-        Map<ProtectedRegion, V> consideredValues = new HashMap<>();
+        Map<ProtectedRegion, V> consideredValues = new ConcurrentHashMap<>();
         Set<ProtectedRegion> ignoredParents = new HashSet<>();
 
         for (ProtectedRegion region : getApplicable()) {

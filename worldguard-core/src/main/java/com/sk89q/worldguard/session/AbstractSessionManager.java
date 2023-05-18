@@ -41,10 +41,10 @@ import com.sk89q.worldguard.session.handler.TimeLockFlag;
 import com.sk89q.worldguard.session.handler.WaterBreathing;
 import com.sk89q.worldguard.session.handler.WeatherLockFlag;
 
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +76,7 @@ public abstract class AbstractSessionManager implements SessionManager {
 
     private boolean hasCustom = false;
     // <original handler, wrapped handler>
-    private Map<Handler.Factory<? extends Handler>, Handler.Factory<? extends Handler>> wrappedHandlers = new HashMap<>();
+    private Map<Handler.Factory<? extends Handler>, Handler.Factory<? extends Handler>> wrappedHandlers = new ConcurrentHashMap<>();
     private List<Handler.Factory<? extends Handler>> handlers = new LinkedList<>();
 
     private static final List<Handler.Factory<? extends Handler>> defaultHandlers = new LinkedList<>();

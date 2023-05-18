@@ -23,13 +23,13 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.util.io.Closer;
 import com.sk89q.worldguard.util.sql.DataSourceConfig;
 
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -144,7 +144,7 @@ class DataUpdater {
     }
 
     private Map<String, String> getExistingRegions() throws SQLException {
-        Map<String, String> existing = new HashMap<>();
+        Map<String, String> existing = new ConcurrentHashMap<>();
 
         Closer closer = Closer.create();
         try {
