@@ -19,6 +19,7 @@
 
 package com.sk89q.worldguard.protection.flags;
 
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldedit.world.gamemode.GameMode;
 import com.sk89q.worldedit.world.gamemode.GameModes;
 
@@ -45,7 +46,10 @@ public class GameModeTypeFlag extends Flag<GameMode> {
         input = input.trim();
         GameMode gamemode = unmarshal(input);
         if (gamemode == null) {
-            throw new InvalidFlagFormatException("Unknown game mode: " + input);
+            throw new InvalidFlagFormatException(
+                    TranslatableComponent.of("worldguard.error.flag.game-mode-type-flag.unknown-game-mode")
+                        .args(TranslatableComponent.of(input))
+            );
         }
         return gamemode;
     }

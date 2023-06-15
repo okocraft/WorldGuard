@@ -19,12 +19,15 @@
 
 package com.sk89q.worldguard.commands.region;
 
+import com.google.common.collect.ImmutableList;
 import com.sk89q.minecraft.util.commands.Command;
 import com.sk89q.minecraft.util.commands.CommandContext;
-import com.sk89q.minecraft.util.commands.CommandException;
-import com.sk89q.minecraft.util.commands.CommandPermissionsException;
 import com.sk89q.worldedit.command.util.AsyncCommandBuilder;
 import com.sk89q.worldedit.extension.platform.Actor;
+import com.sk89q.worldedit.util.formatting.WorldEditText;
+import com.sk89q.worldedit.util.formatting.text.TextComponent;
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
+import com.sk89q.worldedit.util.formatting.text.serializer.legacy.LegacyComponentSerializer;
 import com.sk89q.worldedit.util.formatting.component.ErrorFormat;
 import com.sk89q.worldedit.util.formatting.text.Component;
 import com.sk89q.worldedit.util.formatting.text.TextComponent;
@@ -47,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import org.enginehub.piston.exception.CommandException;
 
 public class MemberCommands extends RegionCommandsBase {
 
@@ -71,7 +75,11 @@ public class MemberCommands extends RegionCommandsBase {
 
         // Check permissions
         if (!getPermissionModel(sender).mayAddMembers(region)) {
-            throw new CommandPermissionsException();
+            // TODO: if we use piston correctly, we can remove this.
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
         }
 
         // Resolve members asynchronously
@@ -81,12 +89,18 @@ public class MemberCommands extends RegionCommandsBase {
         resolver.setActor(sender);
         resolver.setRegion(region);
 
+        final String description = LegacyComponentSerializer.legacy().serialize(
+                WorldEditText.format(
+                        TranslatableComponent.of("worldguard.command.member.add-member.adding-members")
+                                .args(TextComponent.of(region.getId()), TextComponent.of(world.getName())),
+                        sender.getLocale()
+                )
+        );
 
-        final String description = String.format("Adding members to the region '%s' on '%s'", region.getId(), world.getName());
         AsyncCommandBuilder.wrap(resolver, sender)
                 .registerWithSupervisor(worldGuard.getSupervisor(), description)
-                .onSuccess(String.format("Region '%s' updated with new members.", region.getId()), region.getMembers()::addAll)
-                .onFailure("Failed to add new members", worldGuard.getExceptionConverter())
+                .onSuccess(TranslatableComponent.of("worldguard.command.member.add-member.member-added").args(TextComponent.of(region.getId())), region.getMembers()::addAll)
+                .onFailure(TranslatableComponent.of("worldguard.command.member.add-member.failed"), worldGuard.getExceptionConverter())
                 .buildAndExec(worldGuard.getExecutorService());
     }
 
@@ -107,7 +121,11 @@ public class MemberCommands extends RegionCommandsBase {
 
         // Check permissions
         if (!getPermissionModel(sender).mayAddOwners(region)) {
-            throw new CommandPermissionsException();
+            // TODO: if we use piston correctly, we can remove this.
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
         }
 
         // Resolve owners asynchronously
@@ -117,11 +135,18 @@ public class MemberCommands extends RegionCommandsBase {
         resolver.setActor(sender);
         resolver.setRegion(region);
 
-        final String description = String.format("Adding owners to the region '%s' on '%s'", region.getId(), world.getName());
+        final String description = LegacyComponentSerializer.legacy().serialize(
+                WorldEditText.format(
+                        TranslatableComponent.of("worldguard.command.member.add-owner.adding-owners")
+                                .args(TextComponent.of(region.getId()), TextComponent.of(world.getName())),
+                        sender.getLocale()
+                )
+        );
+
         AsyncCommandBuilder.wrap(checkedAddOwners(sender, manager, region, world, resolver), sender)
                 .registerWithSupervisor(worldGuard.getSupervisor(), description)
-                .onSuccess(String.format("Region '%s' updated with new owners.", region.getId()), region.getOwners()::addAll)
-                .onFailure("Failed to add new owners", worldGuard.getExceptionConverter())
+                .onSuccess(TranslatableComponent.of("worldguard.command.member.add-owner.owner-added").args(TextComponent.of(region.getId())), region.getOwners()::addAll)
+                .onFailure(TranslatableComponent.of("worldguard.command.member.add-owner.failed"), worldGuard.getExceptionConverter())
                 .buildAndExec(worldGuard.getExecutorService());
     }
 
@@ -137,7 +162,10 @@ public class MemberCommands extends RegionCommandsBase {
                             .get(world).getMaxRegionCount(player);
                     if (maxRegionCount >= 0 && manager.getRegionCountOfPlayer(player)
                             >= maxRegionCount) {
-                        throw new CommandException("You already own the maximum allowed amount of regions.");
+                        throw new CommandException(
+                                TranslatableComponent.of("worldguard.error.command.member.add-owner.owning-maximum-regions"),
+                                ImmutableList.of()
+                        );
                     }
                 }
             }
@@ -173,7 +201,11 @@ public class MemberCommands extends RegionCommandsBase {
 
         // Check permissions
         if (!getPermissionModel(sender).mayRemoveMembers(region)) {
-            throw new CommandPermissionsException();
+            // TODO: if we use piston correctly, we can remove this.
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
         }
 
         Callable<DefaultDomain> callable;
@@ -181,7 +213,10 @@ public class MemberCommands extends RegionCommandsBase {
             callable = region::getMembers;
         } else {
             if (args.argsLength() < 2) {
-                throw new CommandException("List some names to remove, or use -a to remove all.");
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.error.command.member.remove-member.list-names"),
+                        ImmutableList.of()
+                );
             }
 
             // Resolve members asynchronously
@@ -194,12 +229,19 @@ public class MemberCommands extends RegionCommandsBase {
             callable = resolver;
         }
 
-        final String description = String.format("Removing members from the region '%s' on '%s'", region.getId(), world.getName());
+        final String description = LegacyComponentSerializer.legacy().serialize(
+                WorldEditText.format(
+                        TranslatableComponent.of("worldguard.command.member.remove-member.removing-members")
+                                .args(TextComponent.of(region.getId()), TextComponent.of(world.getName())),
+                        sender.getLocale()
+                )
+        );
+
         AsyncCommandBuilder.wrap(callable, sender)
                 .registerWithSupervisor(worldGuard.getSupervisor(), description)
-                .sendMessageAfterDelay("(Please wait... querying player names...)")
-                .onSuccess(String.format("Region '%s' updated with members removed.", region.getId()), region.getMembers()::removeAll)
-                .onFailure("Failed to remove members", worldGuard.getExceptionConverter())
+                .setDelayMessage(TranslatableComponent.of("worldguard.command.member.remove-member.delay-message"))
+                .onSuccess(TranslatableComponent.of("worldguard.command.member.remove-member.member-removed").args(TextComponent.of(region.getId())), region.getMembers()::removeAll)
+                .onFailure(TranslatableComponent.of("worldguard.command.member.remove-member.failed"), worldGuard.getExceptionConverter())
                 .buildAndExec(worldGuard.getExecutorService());
     }
 
@@ -218,7 +260,11 @@ public class MemberCommands extends RegionCommandsBase {
 
         // Check permissions
         if (!getPermissionModel(sender).mayRemoveOwners(region)) {
-            throw new CommandPermissionsException();
+            // TODO: if we use piston correctly, we can remove this.
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
         }
 
         Callable<DefaultDomain> callable;
@@ -226,7 +272,10 @@ public class MemberCommands extends RegionCommandsBase {
             callable = region::getOwners;
         } else {
             if (args.argsLength() < 2) {
-                throw new CommandException("List some names to remove, or use -a to remove all.");
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.error.command.member.remove-owner.list-names"),
+                        ImmutableList.of()
+                );
             }
 
             // Resolve owners asynchronously
@@ -239,12 +288,18 @@ public class MemberCommands extends RegionCommandsBase {
             callable = resolver;
         }
 
-        final String description = String.format("Removing owners from the region '%s' on '%s'", region.getId(), world.getName());
+        final String description = LegacyComponentSerializer.legacy().serialize(
+                WorldEditText.format(
+                        TranslatableComponent.of("worldguard.command.member.remove-owner.removing-owners")
+                                .args(TextComponent.of(region.getId()), TextComponent.of(world.getName())),
+                        sender.getLocale()
+                )
+        );
         AsyncCommandBuilder.wrap(callable, sender)
                 .registerWithSupervisor(worldGuard.getSupervisor(), description)
-                .sendMessageAfterDelay("(Please wait... querying player names...)")
-                .onSuccess(String.format("Region '%s' updated with owners removed.", region.getId()), region.getOwners()::removeAll)
-                .onFailure("Failed to remove owners", worldGuard.getExceptionConverter())
+                .setDelayMessage(TranslatableComponent.of("worldguard.command.member.remove-owner.delay-message"))
+                .onSuccess(TranslatableComponent.of("worldguard.command.member.remove-owner.owner-removed").args(TextComponent.of(region.getId())), region.getOwners()::removeAll)
+                .onFailure(TranslatableComponent.of("worldguard.command.member.remove-owner.failed"), worldGuard.getExceptionConverter())
                 .buildAndExec(worldGuard.getExecutorService());
     }
 }

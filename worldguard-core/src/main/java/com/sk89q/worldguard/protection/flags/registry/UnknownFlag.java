@@ -19,6 +19,7 @@
 
 package com.sk89q.worldguard.protection.flags.registry;
 
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldguard.protection.flags.Flag;
 import com.sk89q.worldguard.protection.flags.FlagContext;
 import com.sk89q.worldguard.protection.flags.InvalidFlagFormatException;
@@ -33,7 +34,7 @@ public class UnknownFlag extends Flag<Object> {
 
     @Override
     public Object parseInput(FlagContext context) throws InvalidFlagFormatException {
-        throw new InvalidFlagFormatException("The plugin that registered this flag is not currently installed");
+        throw new InvalidFlagFormatException(TranslatableComponent.of("worldguard.error.flag.unknown-flag.not-installed"));
     }
 
     @Override
