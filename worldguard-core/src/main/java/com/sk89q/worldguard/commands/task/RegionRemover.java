@@ -19,7 +19,9 @@
 
 package com.sk89q.worldguard.commands.task;
 
-import com.sk89q.minecraft.util.commands.CommandException;
+import com.google.common.collect.ImmutableList;
+import com.sk89q.worldedit.util.formatting.text.TextComponent;
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.managers.RemovalStrategy;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
@@ -27,6 +29,7 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import javax.annotation.Nullable;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import org.enginehub.piston.exception.CommandException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -80,8 +83,10 @@ public class RegionRemover implements Callable<Set<ProtectedRegion>> {
                 ProtectedRegion parent = test.getParent();
                 if (parent != null && parent.equals(region)) {
                     throw new CommandException(
-                            "The region '" + region.getId() + "' has child regions. Use -f to force removal of children " +
-                                    "or -u to unset the parent value of these children.");
+                            TranslatableComponent.of("worldguard.error.misc.region-remover.has-children")
+                                    .args(TextComponent.of(region.getId())),
+                            ImmutableList.of()
+                    );
                 }
             }
 

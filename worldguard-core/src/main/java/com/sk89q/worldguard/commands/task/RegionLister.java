@@ -21,7 +21,8 @@ package com.sk89q.worldguard.commands.task;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.sk89q.minecraft.util.commands.CommandException;
+import com.google.common.collect.ImmutableList;
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldguard.util.profile.Profile;
 import com.sk89q.worldedit.extension.platform.Actor;
 import com.sk89q.worldedit.util.Location;
@@ -50,6 +51,7 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.enginehub.piston.exception.CommandException;
 
 public class RegionLister implements Callable<Integer> {
 
@@ -133,14 +135,24 @@ public class RegionLister implements Callable<Integer> {
                         profile = WorldGuard.getInstance().getProfileService().findByName(name);
                     } catch (IOException e) {
                         log.log(Level.WARNING, "Failed UUID lookup of '" + name + "'", e);
-                        throw new CommandException("Failed to lookup the UUID of '" + name + "'");
+                        throw new CommandException(
+                                TranslatableComponent.of("worldguard.error.misc.region-lister.failed-to-lookup-uuid")
+                                        .args(TextComponent.of(name)),
+                                ImmutableList.of()
+                        );
                     } catch (InterruptedException e) {
                         log.log(Level.WARNING, "Failed UUID lookup of '" + name + "'", e);
-                        throw new CommandException("The lookup the UUID of '" + name + "' was interrupted");
+                        throw new CommandException(
+                                TranslatableComponent.of("worldguard.error.misc.region-lister.lookup-was-interrupted").args(TextComponent.of(name)),
+                                ImmutableList.of()
+                        );
                     }
 
                     if (profile == null) {
-                        throw new CommandException("A user by the name of '" + name + "' does not seem to exist.");
+                        throw new CommandException(
+                                TranslatableComponent.of("worldguard.error.misc.region-lister.no-user-exists").args(TextComponent.of(name)),
+                                ImmutableList.of()
+                        );
                     }
 
                     uniqueId = profile.getUniqueId();

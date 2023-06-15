@@ -20,6 +20,8 @@
 package com.sk89q.worldguard.protection;
 
 import com.google.common.collect.ImmutableList;
+import com.sk89q.worldedit.util.formatting.text.Component;
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.protection.association.RegionAssociable;
 import com.sk89q.worldguard.protection.flags.Flags;
@@ -43,9 +45,10 @@ public class FailedLoadRegionSet extends AbstractRegionSet {
 
     private static final FailedLoadRegionSet INSTANCE = new FailedLoadRegionSet();
 
-    private final String denyMessage = "Region data for WorldGuard failed to load for this world, so " +
-            "everything has been protected as a precaution. Please inform a server administrator.";
-    private final Collection<String> denyMessageCollection = ImmutableList.of(denyMessage);
+    private final TranslatableComponent denyMessage =
+            TranslatableComponent.of("worldguard.error.denied.failed-load-region-set");
+
+    private final Collection<Component> denyMessageCollection = ImmutableList.of(denyMessage);
 
     private FailedLoadRegionSet() {
     }
@@ -61,7 +64,7 @@ public class FailedLoadRegionSet extends AbstractRegionSet {
     public <V> V queryValue(@Nullable RegionAssociable subject, Flag<V> flag) {
         if (flag == Flags.BUILD) {
             return (V) State.DENY;
-        } else if (flag == Flags.DENY_MESSAGE) {
+        } else if (flag == Flags.DENY_MESSAGE_COMPONENT || flag == Flags.DENY_MESSAGE) {
             return (V) denyMessage;
         }
         return flag.getDefault();
@@ -85,7 +88,7 @@ public class FailedLoadRegionSet extends AbstractRegionSet {
     public <V> Collection<V> queryAllValues(@Nullable RegionAssociable subject, Flag<V> flag) {
         if (flag == Flags.BUILD) {
             return (Collection<V>) ImmutableList.of(State.DENY);
-        } else if (flag == Flags.DENY_MESSAGE) {
+        } else if (flag == Flags.DENY_MESSAGE_COMPONENT || flag == Flags.DENY_MESSAGE) {
             return (Collection<V>) denyMessageCollection;
         }
         V fallback = flag.getDefault();

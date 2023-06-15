@@ -63,6 +63,11 @@ public final class FlagContext extends CommandInputContext<InvalidFlagFormatExce
         return new InvalidFlagFormatException(str);
     }
 
+    @Override
+    protected InvalidFlagFormatException createExceptionWithRichMessage(com.sk89q.worldedit.util.formatting.text.Component component) {
+        return new InvalidFlagFormatException(component);
+    }
+
     public static class FlagContextBuilder {
         private Actor sender;
         private String input;
