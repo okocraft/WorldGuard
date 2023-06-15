@@ -21,6 +21,8 @@ package com.sk89q.worldguard.domains.registry;
 
 import com.google.common.collect.Maps;
 import com.sk89q.worldedit.extension.platform.Actor;
+import com.sk89q.worldedit.util.formatting.text.Component;
+import com.sk89q.worldedit.util.formatting.text.serializer.plain.PlainComponentSerializer;
 import com.sk89q.worldguard.commands.CommandInputContext;
 
 import javax.annotation.Nullable;
@@ -61,6 +63,11 @@ public final class CustomDomainContext extends CommandInputContext<InvalidDomain
     @Override
     protected InvalidDomainFormatException createException(String str) {
         return new InvalidDomainFormatException(str);
+    }
+
+    @Override
+    protected InvalidDomainFormatException createExceptionWithRichMessage(Component component) {
+        return createException(PlainComponentSerializer.INSTANCE.serialize(component));
     }
 
     public static class CustomDomainContextBuilder {

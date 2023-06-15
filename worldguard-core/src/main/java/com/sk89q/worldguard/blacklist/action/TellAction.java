@@ -19,6 +19,8 @@
 
 package com.sk89q.worldguard.blacklist.action;
 
+import com.sk89q.worldedit.util.formatting.text.TextComponent;
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldguard.blacklist.BlacklistEntry;
 import com.sk89q.worldguard.blacklist.event.BlacklistEvent;
 
@@ -44,9 +46,14 @@ public class TellAction extends RepeatGuardedAction {
         if (event.getPlayer() != null) {
             if (message != null) {
                 message = message.replaceAll("(?!<\\\\)\\\\n", "\n").replaceAll("\\\\\\\\n", "\\n");
-                event.getPlayer().print(String.format(message, event.getTarget().getFriendlyName()));
+                event.getPlayer().print(TextComponent.of(String.format(message, event.getTarget().getFriendlyName())));
             } else {
-                event.getPlayer().printError("You're not allowed to " + event.getDescription() + " " + event.getTarget().getFriendlyName() + ".");
+                event.getPlayer().printError(TranslatableComponent.of("worldguard.error.misc.tell-action.not-allowed")
+                        .args(
+                                TextComponent.of(event.getDescription()),
+                                TextComponent.of(event.getTarget().getFriendlyName())
+                        )
+                );
             }
         }
 

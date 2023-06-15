@@ -22,6 +22,7 @@ package com.sk89q.worldguard.protection.flags;
 import com.sk89q.worldedit.entity.Player;
 import com.sk89q.worldedit.math.Vector3;
 import com.sk89q.worldedit.util.Location;
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldedit.world.World;
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.internal.permission.RegionPermissionModel;
@@ -73,10 +74,10 @@ public class LocationFlag extends Flag<Location> {
                 if (WorldGuard.getInstance().getPlatform().getGlobalStateManager().get(player.getWorld()).boundedLocationFlags) {
                     if (!rg.contains(loc.toVector().toBlockPoint())) {
                         if (new RegionPermissionModel(player).mayOverrideLocationFlagBounds(rg)) {
-                            player.printDebug("WARNING: Flag location is outside of region.");
+                            player.printDebug(TranslatableComponent.of("worldguard.flag.location-flag.set-outside-warning"));
                         } else {
                             // no permission
-                            throw new InvalidFlagFormatException("You can't set that flag outside of the region boundaries.");
+                            throw new InvalidFlagFormatException(TranslatableComponent.of("worldguard.error.flag.location-flag.set-outside"));
                         }
                     }
                     // clamp height to world limits
@@ -86,7 +87,7 @@ public class LocationFlag extends Flag<Location> {
             }
             return loc;
         }
-        throw new InvalidFlagFormatException("Expected 'here' or x,y,z.");
+        throw new InvalidFlagFormatException(TranslatableComponent.of("worldguard.error.flag.location-flag.expected-here-or-xyz"));
     }
 
     @Override

@@ -19,16 +19,18 @@
 
 package com.sk89q.worldguard.internal.platform;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.sk89q.minecraft.util.commands.CommandException;
 import com.sk89q.worldedit.entity.Player;
 import com.sk89q.worldedit.extension.platform.Actor;
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldedit.world.World;
 import com.sk89q.worldguard.LocalPlayer;
 
 import javax.annotation.Nullable;
 import java.util.Iterator;
 import java.util.List;
+import org.enginehub.piston.exception.CommandException;
 
 public interface StringMatcher {
 
@@ -73,7 +75,10 @@ public interface StringMatcher {
     default Iterable<? extends LocalPlayer> checkPlayerMatch(List<? extends LocalPlayer> players) throws CommandException {
         // Check to see if there were any matches
         if (players.isEmpty()) {
-            throw new CommandException("No players matched query.");
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.matcher.player-not-matched"),
+                    ImmutableList.of()
+            );
         }
 
         return players;
@@ -115,8 +120,10 @@ public interface StringMatcher {
         // players were found (we don't want to just pick off the first one,
         // as that may be the wrong player)
         if (players.hasNext()) {
-            throw new CommandException("More than one player found! " +
-                    "Use @<name> for exact matching.");
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.matcher.more-than-one-player"),
+                    ImmutableList.of()
+            );
         }
 
         return match;

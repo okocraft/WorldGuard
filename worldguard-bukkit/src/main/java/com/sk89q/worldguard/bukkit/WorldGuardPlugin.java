@@ -298,7 +298,11 @@ public class WorldGuardPlugin extends JavaPlugin {
             sender.sendMessage(ChatColor.RED + e.getMessage());
             sender.sendMessage(ChatColor.RED + e.getUsage());
         } catch (WrappedCommandException e) {
-            sender.sendMessage(ChatColor.RED + e.getCause().getMessage());
+            if (e.getCause() instanceof org.enginehub.piston.exception.CommandException pistonException) {
+                BukkitAdapter.adapt(sender).print(pistonException.getRichMessage());
+            } else {
+                sender.sendMessage(ChatColor.RED + e.getCause().getMessage());
+            }
         } catch (CommandException e) {
             sender.sendMessage(ChatColor.RED + e.getMessage());
         }
