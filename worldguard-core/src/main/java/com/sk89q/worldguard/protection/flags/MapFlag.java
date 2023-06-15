@@ -21,6 +21,7 @@ package com.sk89q.worldguard.protection.flags;
 
 import com.google.common.collect.Maps;
 
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -83,7 +84,7 @@ public class MapFlag<K, V> extends Flag<Map<K, V>> {
             final char split = str.indexOf('=') == -1 ? ':' : '=';
             final String[] keyVal = str.split(String.valueOf(split));
             if (keyVal.length != 2) {
-                throw new InvalidFlagFormatException("Input must be in a 'key:value,key1=value1' format. Either ':' or '=' can be used.");
+                throw new InvalidFlagFormatException(TranslatableComponent.of("worldguard.error.flag.map-flag.input-format"));
             }
 
             final FlagContext key = context.copyWith(null, keyVal[0], null);

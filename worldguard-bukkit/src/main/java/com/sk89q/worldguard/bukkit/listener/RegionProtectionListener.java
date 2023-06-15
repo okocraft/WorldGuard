@@ -21,6 +21,15 @@ package com.sk89q.worldguard.bukkit.listener;
 
 import com.google.common.base.Predicate;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.util.formatting.text.BlockNbtComponent;
+import com.sk89q.worldedit.util.formatting.text.Component;
+import com.sk89q.worldedit.util.formatting.text.ComponentBuilder;
+import com.sk89q.worldedit.util.formatting.text.KeybindComponent;
+import com.sk89q.worldedit.util.formatting.text.NbtComponent;
+import com.sk89q.worldedit.util.formatting.text.SelectorComponent;
+import com.sk89q.worldedit.util.formatting.text.TextComponent;
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
+import com.sk89q.worldedit.util.formatting.text.serializer.gson.GsonComponentSerializer;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
@@ -46,6 +55,7 @@ import com.sk89q.worldguard.protection.flags.Flags;
 import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.flags.StateFlag.State;
 import com.sk89q.worldguard.protection.regions.RegionQuery;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -94,7 +104,7 @@ public class RegionProtectionListener extends AbstractListener {
      * @param location the location
      * @param what what was done
      */
-    private void tellErrorMessage(DelegateEvent event, Cause cause, Location location, String what) {
+    private void tellErrorMessage(DelegateEvent event, Cause cause, Location location, TranslatableComponent what) {
         if (event.isSilent() || cause.isIndirect()) {
             return;
         }
@@ -109,18 +119,50 @@ public class RegionProtectionListener extends AbstractListener {
             if (lastTime == null || now - lastTime >= LAST_MESSAGE_DELAY) {
                 RegionQuery query = WorldGuard.getInstance().getPlatform().getRegionContainer().createQuery();
                 LocalPlayer localPlayer = getPlugin().wrapPlayer(player);
-                String message = query.queryValue(BukkitAdapter.adapt(location), localPlayer, Flags.DENY_MESSAGE);
+                Component message = query.queryValue(BukkitAdapter.adapt(location), localPlayer, Flags.DENY_MESSAGE_COMPONENT);
                 formatAndSendDenyMessage(what, localPlayer, message);
                 WGMetadata.put(player, DENY_MESSAGE_KEY, now);
             }
         }
     }
 
-    static void formatAndSendDenyMessage(String what, LocalPlayer localPlayer, String message) {
-        if (message == null || message.isEmpty()) return;
-        message = WorldGuard.getInstance().getPlatform().getMatcher().replaceMacros(localPlayer, message);
-        message = CommandUtils.replaceColorMacros(message);
-        localPlayer.printRaw(message.replace("%what%", what));
+    static void formatAndSendDenyMessage(TranslatableComponent what, LocalPlayer localPlayer, Component message) {
+        if (message == null) return;
+
+        String str = GsonComponentSerializer.INSTANCE.serialize(putTranslatableArgs(message, what));
+        localPlayer.print(GsonComponentSerializer.INSTANCE.deserialize(CommandUtils.replaceColorMacros(
+                WorldGuard.getInstance().getPlatform().getMatcher().replaceMacros(localPlayer, str))));
+    }
+
+    private static ComponentBuilder<?, ?> toBuilder(Component component) {
+        if (component instanceof BlockNbtComponent) {
+            return ((TextComponent) component).toBuilder();
+        } else if (component instanceof NbtComponent) {
+            return ((NbtComponent<?, ?>) component).toBuilder();
+        } else if (component instanceof KeybindComponent) {
+            return ((KeybindComponent) component).toBuilder();
+        } else if (component instanceof SelectorComponent) {
+            return ((SelectorComponent) component).toBuilder();
+        } else if (component instanceof TextComponent) {
+            return ((TextComponent) component).toBuilder();
+        } else if (component instanceof TranslatableComponent) {
+            return ((TranslatableComponent) component).toBuilder();
+        } else {
+            return null;
+        }
+    }
+
+    private static Component putTranslatableArgs(Component component, Component... args) {
+        ComponentBuilder<?, ?> builder = toBuilder(component);
+        if (builder == null) return component;
+
+        return builder.mapChildrenDeep(c -> {
+            if (c instanceof TranslatableComponent) {
+                return ((TranslatableComponent) c).args(args);
+            } else {
+                return c;
+            }
+        }).build();
     }
 
     /**
@@ -168,7 +210,7 @@ public class RegionProtectionListener extends AbstractListener {
 
         event.filter((Predicate<Location>) target -> {
             boolean canPlace;
-            String what;
+            TranslatableComponent what;
 
             /* Flint and steel, fire charge, etc. */
             if (Materials.isFire(type)) {
@@ -181,16 +223,16 @@ public class RegionProtectionListener extends AbstractListener {
                 if (fire) flags.add(Flags.FIRE_SPREAD);
                 if (lava) flags.add(Flags.LAVA_FIRE);
                 canPlace = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event, flags.toArray(new StateFlag[flags.size()])));
-                what = "place fire";
+                what = TranslatableComponent.of("worldguard.error.denied.what.place-fire");
 
             } else if (type == Material.FROSTED_ICE) {
                 event.setSilent(true); // gets spammy
                 canPlace = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event, Flags.BLOCK_PLACE, Flags.FROSTED_ICE_FORM));
-                what = "use frostwalker"; // hidden anyway
+                what = TranslatableComponent.of("worldguard.error.denied.what.use-frostwalker"); // hidden anyway
             /* Everything else */
             } else {
                 canPlace = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event, Flags.BLOCK_PLACE));
-                what = "place that block";
+                what = TranslatableComponent.of("worldguard.error.denied.what.place-that-block");
             }
 
             if (!canPlace) {
@@ -215,17 +257,17 @@ public class RegionProtectionListener extends AbstractListener {
 
             event.filter((Predicate<Location>) target -> {
                 boolean canBreak;
-                String what;
+                TranslatableComponent what;
 
                 /* TNT */
                 if (event.getCause().find(EntityType.PRIMED_TNT, EntityType.MINECART_TNT) != null) {
                     canBreak = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event, Flags.BLOCK_BREAK, Flags.TNT));
-                    what = "use dynamite";
+                    what = TranslatableComponent.of("worldguard.error.denied.what.use-dynamite");
 
                 /* Everything else */
                 } else {
                     canBreak = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event, Flags.BLOCK_BREAK));
-                    what = "break that block";
+                    what = TranslatableComponent.of("worldguard.error.denied.what.break-that-block");
                 }
 
                 if (!canBreak) {
@@ -250,52 +292,52 @@ public class RegionProtectionListener extends AbstractListener {
 
         event.filter((Predicate<Location>) target -> {
             boolean canUse;
-            String what;
+            TranslatableComponent what;
 
             /* Saplings, etc. */
             if (Materials.isConsideredBuildingIfUsed(type)) {
                 canUse = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event));
-                what = "use that";
+                what = TranslatableComponent.of("worldguard.error.denied.what.use-that");
 
             /* Inventory */
             } else if (Materials.isInventoryBlock(type)) {
                 canUse = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event, Flags.CHEST_ACCESS));
-                what = "open that";
+                what = TranslatableComponent.of("worldguard.error.denied.what.open-that");
 
             /* Inventory for blocks with the possibility to be only use, e.g. lectern */
             } else if (handleAsInventoryUsage(event.getOriginalEvent())) {
                 canUse = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event, Flags.CHEST_ACCESS));
-                what = "take that";
+                what = TranslatableComponent.of("worldguard.error.denied.what.take-that");
 
             /* Anvils */
             } else if (Materials.isAnvil(type)) {
                 canUse = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event, Flags.USE_ANVIL));
-                what = "use that";
+                what = TranslatableComponent.of("worldguard.error.denied.what.use-that");
 
             /* Beds */
             } else if (Materials.isBed(type)) {
                 canUse = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event, Flags.INTERACT, Flags.SLEEP));
-                what = "sleep";
+                what = TranslatableComponent.of("worldguard.error.denied.what.sleep");
 
             /* Respawn Anchors */
             } else if(type == Material.RESPAWN_ANCHOR) {
                 canUse = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event, Flags.INTERACT, Flags.RESPAWN_ANCHORS));
-                what = "use anchors";
+                what = TranslatableComponent.of("worldguard.error.denied.what.use-anchors");
 
             /* TNT */
             } else if (type == Material.TNT) {
                 canUse = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event, Flags.INTERACT, Flags.TNT));
-                what = "use explosives";
+                what = TranslatableComponent.of("worldguard.error.denied.what.use-explosives");
 
             /* Legacy USE flag */
             } else if (Materials.isUseFlagApplicable(type)) {
                 canUse = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event, Flags.INTERACT, Flags.USE));
-                what = "use that";
+                what = TranslatableComponent.of("worldguard.error.denied.what.use-that");
 
             /* Everything else */
             } else {
                 canUse = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event, Flags.INTERACT));
-                what = "use that";
+                what = TranslatableComponent.of("worldguard.error.denied.what.use-that");
             }
 
             if (!canUse) {
@@ -320,31 +362,31 @@ public class RegionProtectionListener extends AbstractListener {
         RegionAssociable associable = createRegionAssociable(event.getCause());
 
         boolean canSpawn;
-        String what;
+        TranslatableComponent what;
 
         /* Vehicles */
         if (Entities.isVehicle(type)) {
             canSpawn = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event, Flags.PLACE_VEHICLE));
-            what = "place vehicles";
+            what = TranslatableComponent.of("worldguard.error.denied.what.place-vehicles");
 
         /* Item pickup */
         } else if (event.getEntity() instanceof Item) {
             canSpawn = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event, Flags.ITEM_DROP));
-            what = "drop items";
+            what = TranslatableComponent.of("worldguard.error.denied.what.drop-items");
 
         /* XP drops */
         } else if (type == EntityType.EXPERIENCE_ORB) {
             canSpawn = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event, Flags.EXP_DROPS));
-            what = "drop XP";
+            what = TranslatableComponent.of("worldguard.error.denied.what.drop-xp");
 
         } else if (Entities.isAoECloud(type)) {
             canSpawn = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event, Flags.POTION_SPLASH));
-            what = "use lingering potions";
+            what = TranslatableComponent.of("worldguard.error.denied.what.use-lingering-potions");
 
         /* Everything else */
         } else {
             canSpawn = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event));
-            what = "place things";
+            what = TranslatableComponent.of("worldguard.error.denied.what.place-things");
         }
 
         if (!canSpawn) {
@@ -365,22 +407,22 @@ public class RegionProtectionListener extends AbstractListener {
 
         RegionQuery query = WorldGuard.getInstance().getPlatform().getRegionContainer().createQuery();
         boolean canDestroy;
-        String what;
+        TranslatableComponent what;
 
         /* Vehicles */
         if (Entities.isVehicle(type)) {
             canDestroy = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event, Flags.DESTROY_VEHICLE));
-            what = "break vehicles";
+            what = TranslatableComponent.of("worldguard.error.denied.what.break-vehicles");
 
         /* Item pickup */
         } else if (event.getEntity() instanceof Item || event.getEntity() instanceof ExperienceOrb) {
             canDestroy = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event, Flags.ITEM_PICKUP));
-            what = "pick up items";
+            what = TranslatableComponent.of("worldguard.error.denied.what.pick-up-items");
 
         /* Everything else */
         } else {
             canDestroy = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event));
-            what = "break things";
+            what = TranslatableComponent.of("worldguard.error.denied.what.break-things");
         }
 
         if (!canDestroy) {
@@ -400,7 +442,7 @@ public class RegionProtectionListener extends AbstractListener {
 
         RegionQuery query = WorldGuard.getInstance().getPlatform().getRegionContainer().createQuery();
         boolean canUse;
-        String what;
+        TranslatableComponent what;
 
         /* Hostile / ambient mob override */
         final Entity entity = event.getEntity();
@@ -408,30 +450,30 @@ public class RegionProtectionListener extends AbstractListener {
         if (Entities.isHostile(entity) || Entities.isAmbient(entity)
                 || Entities.isNPC(entity) || entity instanceof Player) {
             canUse = event.getRelevantFlags().isEmpty() || query.queryState(BukkitAdapter.adapt(target), associable, combine(event)) != State.DENY;
-            what = "use that";
+            what = TranslatableComponent.of("worldguard.error.denied.what.use-that");
         /* Paintings, item frames, etc. */
         } else if (Entities.isConsideredBuildingIfUsed(entity)) {
             if ((type == EntityType.ITEM_FRAME || type == EntityType.GLOW_ITEM_FRAME)
                     && event.getCause().getFirstPlayer() != null
                     && ((ItemFrame) entity).getItem().getType() != Material.AIR) {
                 canUse = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event, Flags.ITEM_FRAME_ROTATE));
-                what = "change that";
+                what = TranslatableComponent.of("worldguard.error.denied.what.change-that");
             } else if (Entities.isMinecart(type)) {
                 canUse = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event, Flags.CHEST_ACCESS));
-                what = "open that";
+                what = TranslatableComponent.of("worldguard.error.denied.what.open-that");
             } else {
                 canUse = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event));
-                what = "change that";
+                what = TranslatableComponent.of("worldguard.error.denied.what.change-that");
             }
         /* Ridden on use */
         } else if (Entities.isRiddenOnUse(entity)) {
             canUse = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event, Flags.RIDE, Flags.INTERACT));
-            what = "ride that";
+            what = TranslatableComponent.of("worldguard.error.denied.what.ride-that");
 
         /* Everything else */
         } else {
             canUse = query.testBuild(BukkitAdapter.adapt(target), associable, combine(event, Flags.INTERACT));
-            what = "use that";
+            what = TranslatableComponent.of("worldguard.error.denied.what.use-that");
         }
 
         if (!canUse) {
@@ -452,7 +494,7 @@ public class RegionProtectionListener extends AbstractListener {
         RegionQuery query = WorldGuard.getInstance().getPlatform().getRegionContainer().createQuery();
         Player playerAttacker = event.getCause().getFirstPlayer();
         boolean canDamage;
-        String what;
+        TranslatableComponent what;
 
         // Block PvP like normal even if the player has an override permission
         // because (1) this is a frequent source of confusion and
@@ -466,12 +508,12 @@ public class RegionProtectionListener extends AbstractListener {
         if (Entities.isHostile(event.getEntity()) || Entities.isAmbient(event.getEntity())
                 || Entities.isVehicle(event.getEntity().getType())) {
             canDamage = event.getRelevantFlags().isEmpty() || query.queryState(target, associable, combine(event)) != State.DENY;
-            what = "hit that";
+            what = TranslatableComponent.of("worldguard.error.denied.what.hit-that");
 
         /* Paintings, item frames, etc. */
         } else if (Entities.isConsideredBuildingIfUsed(event.getEntity())) {
             canDamage = query.testBuild(target, associable, combine(event));
-            what = "change that";
+            what = TranslatableComponent.of("worldguard.error.denied.what.change-that");
 
         /* PVP */
         } else if (pvp) {
@@ -491,23 +533,22 @@ public class RegionProtectionListener extends AbstractListener {
             if (!canDamage && Events.fireAndTestCancel(new DisallowedPVPEvent(playerAttacker, defender, event.getOriginalEvent()))) {
                 canDamage = true;
             }
-
-            what = "PvP";
+            what = TranslatableComponent.of("worldguard.error.denied.what.pvp");
 
         /* Player damage not caused  by another player */
         } else if (event.getEntity() instanceof Player) {
             canDamage = event.getRelevantFlags().isEmpty() || query.queryState(target, associable, combine(event)) != State.DENY;
-            what = "damage that";
+            what = TranslatableComponent.of("worldguard.error.denied.what.damage-that");
 
         /* damage to non-hostile mobs (e.g. animals) */
         } else if (Entities.isNonHostile(event.getEntity())) {
             canDamage = query.testBuild(target, associable, combine(event, Flags.DAMAGE_ANIMALS));
-            what = "harm that";
+            what = TranslatableComponent.of("worldguard.error.denied.what.harm-that");
 
         /* Everything else */
         } else {
             canDamage = query.testBuild(target, associable, combine(event, Flags.INTERACT));
-            what = "hit that";
+            what = TranslatableComponent.of("worldguard.error.denied.what.hit-that");
         }
 
         if (!canDamage) {

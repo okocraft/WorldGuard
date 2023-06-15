@@ -20,6 +20,9 @@
 package com.sk89q.worldguard.commands;
 
 import com.sk89q.worldedit.extension.platform.Actor;
+import com.sk89q.worldedit.util.formatting.text.Component;
+import com.sk89q.worldedit.util.formatting.text.TextComponent;
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldguard.LocalPlayer;
 
 import javax.annotation.Nullable;
@@ -59,7 +62,7 @@ public abstract class CommandInputContext<T extends Exception> {
         if (sender.isPlayer() && sender instanceof LocalPlayer) {
             return (LocalPlayer) sender;
         } else {
-            throw createException("Not a player");
+            throw createExceptionWithRichMessage(TranslatableComponent.of("worldguard.error.flag.not-a-player"));
         }
     }
 
@@ -67,7 +70,10 @@ public abstract class CommandInputContext<T extends Exception> {
         try {
             return Integer.parseInt(input);
         } catch (NumberFormatException e) {
-            throw createException("Not a number: " + input);
+            throw createExceptionWithRichMessage(
+                    TranslatableComponent.of("worldguard.error.flag.not-a-number")
+                    .args(TextComponent.of(input))
+            );
         }
     }
 
@@ -75,11 +81,16 @@ public abstract class CommandInputContext<T extends Exception> {
         try {
             return Double.parseDouble(input);
         } catch (NumberFormatException e) {
-            throw createException("Not a number: " + input);
+            throw createExceptionWithRichMessage(
+                    TranslatableComponent.of("worldguard.error.flag.not-a-number")
+                            .args(TextComponent.of(input))
+            );
         }
     }
 
     protected abstract T createException(String str);
+
+    protected abstract T createExceptionWithRichMessage(Component component);
 
     /**
      * Get an object from the context by key name.

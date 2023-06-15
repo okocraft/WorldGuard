@@ -22,15 +22,17 @@ package com.sk89q.worldguard.commands;
 import com.google.common.collect.Lists;
 import com.sk89q.minecraft.util.commands.Command;
 import com.sk89q.minecraft.util.commands.CommandContext;
-import com.sk89q.minecraft.util.commands.CommandException;
 import com.sk89q.minecraft.util.commands.CommandPermissions;
 import com.sk89q.worldedit.extension.platform.Actor;
 import com.sk89q.worldedit.util.Location;
 import com.sk89q.worldedit.util.auth.AuthorizationException;
+import com.sk89q.worldedit.util.formatting.text.TextComponent;
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.session.Session;
 import com.sk89q.worldguard.session.handler.GodMode;
+import org.enginehub.piston.exception.CommandException;
 
 public class GeneralCommands {
     private final WorldGuard worldGuard;
@@ -66,12 +68,13 @@ public class GeneralCommands {
 
                 // Tell the user
                 if (player.equals(sender)) {
-                    player.print("God mode enabled! Use /ungod to disable.");
+                    player.print(TranslatableComponent.of("worldguard.command.general.god.enable"));
 
                     // Keep track of this
                     included = true;
                 } else {
-                    player.print("God enabled by " + sender.getDisplayName() + ".");
+                    player.print(TranslatableComponent.of("worldguard.command.general.god.enable-by-other")
+                            .args(TextComponent.of(sender.getDisplayName())));
 
                 }
             }
@@ -80,7 +83,7 @@ public class GeneralCommands {
         // The player didn't receive any items, then we need to send the
         // user a message so s/he know that something is indeed working
         if (!included && args.hasFlag('s')) {
-            sender.print("Players now have god mode.");
+            sender.print(TranslatableComponent.of("worldguard.command.general.god.enabled-other"));
         }
     }
     
@@ -109,13 +112,13 @@ public class GeneralCommands {
             if (GodMode.set(player, session, false)) {
                 // Tell the user
                 if (player.equals(sender)) {
-                    player.print("God mode disabled!");
+                    player.print(TranslatableComponent.of("worldguard.command.general.ungod.disable"));
 
                     // Keep track of this
                     included = true;
                 } else {
-                    player.print("God disabled by " + sender.getDisplayName() + ".");
-
+                    player.print(TranslatableComponent.of("worldguard.command.general.ungod.disable-by-other")
+                            .args(TextComponent.of(sender.getDisplayName())));
                 }
             }
         }
@@ -123,7 +126,7 @@ public class GeneralCommands {
         // The player didn't receive any items, then we need to send the
         // user a message so s/he know that something is indeed working
         if (!included && args.hasFlag('s')) {
-            sender.print("Players no longer have god mode.");
+            sender.print(TranslatableComponent.of("worldguard.command.general.ungod.disabled-other"));
         }
     }
     
@@ -154,12 +157,13 @@ public class GeneralCommands {
             
             // Tell the user
             if (player.equals(sender)) {
-                player.print("Healed!");
+                player.print(TranslatableComponent.of("worldguard.command.general.heal.healed"));
                 
                 // Keep track of this
                 included = true;
             } else {
-                player.print("Healed by " + sender.getDisplayName() + ".");
+                player.print(TranslatableComponent.of("worldguard.command.general.heal.healed-by-other")
+                        .args(TextComponent.of(sender.getDisplayName())));
                 
             }
         }
@@ -167,7 +171,7 @@ public class GeneralCommands {
         // The player didn't receive any items, then we need to send the
         // user a message so s/he know that something is indeed working
         if (!included && args.hasFlag('s')) {
-            sender.print("Players healed.");
+            sender.print(TranslatableComponent.of("worldguard.command.general.heal.healed-other"));
         }
     }
     
@@ -195,12 +199,13 @@ public class GeneralCommands {
             
             // Tell the user
             if (player.equals(sender)) {
-                player.print("Slain!");
+                player.print(TranslatableComponent.of("worldguard.command.general.slay.slain"));
                 
                 // Keep track of this
                 included = true;
             } else {
-                player.print("Slain by " + sender.getDisplayName() + ".");
+                player.print(TranslatableComponent.of("worldguard.command.general.slay.slain-by-other")
+                        .args(TextComponent.of(sender.getDisplayName())));
                 
             }
         }
@@ -208,7 +213,7 @@ public class GeneralCommands {
         // The player didn't receive any items, then we need to send the
         // user a message so s/he know that something is indeed working
         if (!included && args.hasFlag('s')) {
-            sender.print("Players slain.");
+            sender.print(TranslatableComponent.of("worldguard.command.general.slay.slain-other"));
         }
     }
     
@@ -220,12 +225,12 @@ public class GeneralCommands {
         if (args.argsLength() == 0) {
             player.setCompassTarget(new Location(player.getWorld(), player.getWorld().getSpawnPosition().toVector3()));
             
-            sender.print("Compass reset to spawn.");
+            sender.print(TranslatableComponent.of("worldguard.command.general.locate.reset-to-spawn"));
         } else {
             LocalPlayer target = worldGuard.getPlatform().getMatcher().matchSinglePlayer(sender, args.getString(0));
             player.setCompassTarget(target.getLocation());
             
-            sender.print("Compass repointed.");
+            sender.print(TranslatableComponent.of("worldguard.command.general.locate.repointed"));
         }
     }
     
@@ -236,6 +241,6 @@ public class GeneralCommands {
 
         WorldGuard.getInstance().getPlatform().stackPlayerInventory(player);
 
-        player.print("Items compacted into stacks!");
+        player.print(TranslatableComponent.of("worldguard.command.general.stack.compacted"));
     }
 }

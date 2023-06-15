@@ -19,8 +19,10 @@
 
 package com.sk89q.worldguard.bukkit;
 
+import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.bukkit.BukkitWorld;
+import com.sk89q.worldedit.extension.platform.Capability;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.util.formatting.text.TextComponent;
 import com.sk89q.worldedit.util.report.ReportList;
@@ -53,6 +55,7 @@ import com.sk89q.worldguard.util.profile.resolver.CacheForwardingService;
 import com.sk89q.worldguard.util.profile.resolver.CombinedProfileService;
 import com.sk89q.worldguard.util.profile.resolver.HttpRepositoryService;
 import com.sk89q.worldguard.util.profile.resolver.ProfileService;
+import com.sk89q.worldguard.util.translation.TranslationAdder;
 import io.papermc.lib.PaperLib;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -137,6 +140,10 @@ public class BukkitWorldGuardPlatform implements WorldGuardPlatform {
     public void load() {
         stringMatcher = new BukkitStringMatcher();
         sessionManager = new BukkitSessionManager();
+
+        TranslationAdder.addAndSaveTranslations();
+        WorldEdit.getInstance().getPlatformManager().queryCapability(Capability.CONFIGURATION).reload();
+
         configuration = new BukkitConfigurationManager(WorldGuardPlugin.inst());
         configuration.load();
         regionContainer = new BukkitRegionContainer(WorldGuardPlugin.inst());

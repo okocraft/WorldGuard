@@ -19,12 +19,14 @@
 
 package com.sk89q.worldguard.bukkit;
 
-import com.sk89q.minecraft.util.commands.CommandException;
+import com.google.common.collect.ImmutableList;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.extension.platform.Actor;
 import com.sk89q.worldedit.extension.platform.Capability;
 import com.sk89q.worldedit.math.Vector3;
+import com.sk89q.worldedit.util.formatting.text.TextComponent;
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldedit.world.World;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.WorldGuard;
@@ -36,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.enginehub.piston.exception.CommandException;
 
 public class BukkitStringMatcher implements StringMatcher {
 
@@ -57,7 +60,10 @@ public class BukkitStringMatcher implements StringMatcher {
                     }
                 }
 
-                throw new CommandException("No normal world found.");
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.error.matcher.no-normal-world-found"),
+                        ImmutableList.of()
+                );
 
                 // #nether for the first nether world
             } else if (filter.equalsIgnoreCase("#nether")) {
@@ -67,7 +73,10 @@ public class BukkitStringMatcher implements StringMatcher {
                     }
                 }
 
-                throw new CommandException("No nether world found.");
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.error.matcher.no-nether-world-found"),
+                        ImmutableList.of()
+                );
 
                 // #end for the first nether world
             } else if (filter.equalsIgnoreCase("#end")) {
@@ -77,7 +86,10 @@ public class BukkitStringMatcher implements StringMatcher {
                     }
                 }
 
-                throw new CommandException("No end world found.");
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.error.matcher.no-end-world-found"),
+                        ImmutableList.of()
+                );
 
                 // Handle getting a world from a player
             } else if (filter.matches("^#player$")) {
@@ -85,12 +97,19 @@ public class BukkitStringMatcher implements StringMatcher {
 
                 // They didn't specify an argument for the player!
                 if (parts.length == 1) {
-                    throw new CommandException("Argument expected for #player.");
+                    throw new CommandException(
+                            TranslatableComponent.of("worldguard.error.matcher.player-must-be-argument"),
+                            ImmutableList.of()
+                    );
                 }
 
                 return matchPlayers(sender, parts[1]).iterator().next().getWorld();
             } else {
-                throw new CommandException("Invalid identifier '" + filter + "'.");
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.error.matcher.invalid-identifier").args(
+                                TextComponent.of(filter)),
+                        ImmutableList.of()
+                );
             }
         }
 
@@ -100,7 +119,10 @@ public class BukkitStringMatcher implements StringMatcher {
             }
         }
 
-        throw new CommandException("No world by that exact name found.");
+        throw new CommandException(
+                TranslatableComponent.of("worldguard.error.matcher.world-not-found"),
+                ImmutableList.of()
+        );
     }
 
     @Override
@@ -153,7 +175,10 @@ public class BukkitStringMatcher implements StringMatcher {
     @Override
     public Iterable<? extends LocalPlayer> matchPlayers(Actor source, String filter) throws CommandException {
         if (Bukkit.getServer().getOnlinePlayers().isEmpty()) {
-            throw new CommandException("No players matched query.");
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.matcher.player-not-matched"),
+                    ImmutableList.of()
+            );
         }
 
         List<LocalPlayer> wgPlayers = Bukkit.getServer().getOnlinePlayers().stream().map(player -> WorldGuardPlugin.inst().wrapPlayer(player)).collect(Collectors.toList());
@@ -195,7 +220,11 @@ public class BukkitStringMatcher implements StringMatcher {
                 return checkPlayerMatch(players);
 
             } else {
-                throw new CommandException("Invalid group '" + filter + "'.");
+                throw new CommandException(
+                        TranslatableComponent.of("worldguard.error.matcher.invalid-group").args(
+                                TextComponent.of(filter)),
+                        ImmutableList.of()
+                );
             }
         }
 

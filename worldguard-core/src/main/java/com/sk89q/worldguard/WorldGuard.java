@@ -21,9 +21,10 @@ package com.sk89q.worldguard;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.sk89q.minecraft.util.commands.CommandException;
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldguard.domains.registry.DomainRegistry;
 import com.sk89q.worldguard.domains.registry.SimpleDomainRegistry;
 import com.sk89q.worldguard.util.profile.cache.HashMapCache;
@@ -47,6 +48,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.enginehub.piston.exception.CommandException;
 
 public final class WorldGuard {
 
@@ -186,7 +189,10 @@ public final class WorldGuard {
         if (sender instanceof LocalPlayer) {
             return (LocalPlayer) sender;
         } else {
-            throw new CommandException("A player is expected.");
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.core.check-player"),
+                    ImmutableList.of()
+            );
         }
     }
 

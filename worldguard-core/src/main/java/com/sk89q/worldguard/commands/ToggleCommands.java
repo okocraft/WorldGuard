@@ -21,16 +21,15 @@ package com.sk89q.worldguard.commands;
 
 import com.sk89q.minecraft.util.commands.Command;
 import com.sk89q.minecraft.util.commands.CommandContext;
-import com.sk89q.minecraft.util.commands.CommandException;
 import com.sk89q.minecraft.util.commands.CommandPermissions;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.entity.Entity;
 import com.sk89q.worldedit.extension.platform.Actor;
 import com.sk89q.worldedit.extension.platform.Capability;
 import com.sk89q.worldedit.util.formatting.component.CodeFormat;
-import com.sk89q.worldedit.util.formatting.component.ErrorFormat;
-import com.sk89q.worldedit.util.formatting.component.LabelFormat;
+import com.sk89q.worldedit.util.formatting.text.Component;
 import com.sk89q.worldedit.util.formatting.text.TextComponent;
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldedit.util.formatting.text.event.ClickEvent;
 import com.sk89q.worldedit.util.formatting.text.event.HoverEvent;
 import com.sk89q.worldedit.util.formatting.text.format.TextColor;
@@ -41,6 +40,7 @@ import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.config.ConfigurationManager;
 import com.sk89q.worldguard.config.WorldConfiguration;
 import com.sk89q.worldguard.util.Entities;
+import org.enginehub.piston.exception.CommandException;
 
 public class ToggleCommands {
     private final WorldGuard worldGuard;
@@ -53,23 +53,26 @@ public class ToggleCommands {
             desc = "Disables all fire spread temporarily", max = 1)
     @CommandPermissions({"worldguard.fire-toggle.stop"})
     public void stopFire(CommandContext args, Actor sender) throws CommandException {
-        
+
         World world;
-        
+
         if (args.argsLength() == 0) {
             world = worldGuard.checkPlayer(sender).getWorld();
         } else {
             world = worldGuard.getPlatform().getMatcher().matchWorld(sender, args.getString(0));
         }
-        
+
         WorldConfiguration wcfg = WorldGuard.getInstance().getPlatform().getGlobalStateManager().get(world);
 
         if (!wcfg.fireSpreadDisableToggle) {
             worldGuard.getPlatform().broadcastNotification(
-                    LabelFormat.wrap("Fire spread has been globally disabled for '" + world.getName() + "' by "
-                    + sender.getDisplayName() + "."));
+                    TextComponent.empty().color(TextColor.YELLOW).append(
+                            TranslatableComponent.of("worldguard.command.toggle.fire-spread.disabled")
+                                    .args(TextComponent.of(world.getName()), TextComponent.of(sender.getDisplayName()))
+                    )
+            );
         } else {
-            sender.print("Fire spread was already globally disabled.");
+            sender.print(TranslatableComponent.of("worldguard.command.toggle.fire-spread.already-disabled"));
         }
 
         wcfg.fireSpreadDisableToggle = true;
@@ -79,22 +82,26 @@ public class ToggleCommands {
             desc = "Allows all fire spread temporarily", max = 1)
     @CommandPermissions({"worldguard.fire-toggle.stop"})
     public void allowFire(CommandContext args, Actor sender) throws CommandException {
-        
+
         World world;
-        
+
         if (args.argsLength() == 0) {
             world = worldGuard.checkPlayer(sender).getWorld();
         } else {
             world = worldGuard.getPlatform().getMatcher().matchWorld(sender, args.getString(0));
         }
-        
+
         WorldConfiguration wcfg = WorldGuard.getInstance().getPlatform().getGlobalStateManager().get(world);
 
         if (wcfg.fireSpreadDisableToggle) {
-            worldGuard.getPlatform().broadcastNotification(LabelFormat.wrap("Fire spread has been globally for '" + world.getName() + "' re-enabled by "
-                    + sender.getDisplayName() + "."));
+            worldGuard.getPlatform().broadcastNotification(
+                    TextComponent.empty().color(TextColor.YELLOW).append(
+                            TranslatableComponent.of("worldguard.command.toggle.fire-spread.enabled")
+                                    .args(TextComponent.of(world.getName()), TextComponent.of(sender.getDisplayName()))
+                    )
+            );
         } else {
-            sender.print("Fire spread was already globally enabled.");
+            sender.print(TranslatableComponent.of("worldguard.command.toggle.fire-spread.already-enabled"));
         }
 
         wcfg.fireSpreadDisableToggle = false;
@@ -109,9 +116,9 @@ public class ToggleCommands {
 
         if (args.hasFlag('i')) {
             if (configManager.activityHaltToggle) {
-                 sender.print("ALL intensive server activity is not allowed.");
+                 sender.print(TranslatableComponent.of("worldguard.command.toggle.stop-lag.info.intensive-not-allowed"));
             } else {
-                 sender.print("ALL intensive server activity is allowed.");
+                 sender.print(TranslatableComponent.of("worldguard.command.toggle.stop-lag.info.intensive-allowed"));
             }
         } else {
             boolean activityHaltToggle = !args.hasFlag('c');
@@ -119,19 +126,30 @@ public class ToggleCommands {
             if (activityHaltToggle && (args.argsLength() == 0 || !args.getString(0).equalsIgnoreCase("confirm"))) {
                 String confirmCommand = "/" + args.getCommand() + " confirm";
 
+                // mess...
+                String confKey = "worldguard.command.toggle.stop-lag.confirm";
+
+                Component line1 = TranslatableComponent.of(confKey + "-1", TextColor.RED)
+                        .args(TranslatableComponent.of(confKey + "-1.permanently-string", TextColor.RED)
+                                .decoration(TextDecoration.BOLD, TextDecoration.State.TRUE));
+
+                Component line2 = TranslatableComponent.of(confKey + "-2", TextColor.RED)
+                        .args(
+                                TranslatableComponent.of(confKey + "-2.bracket-click", TextColor.GREEN)
+                                        .clickEvent(ClickEvent.of(ClickEvent.Action.RUN_COMMAND, confirmCommand))
+                                        .hoverEvent(HoverEvent.of(
+                                                HoverEvent.Action.SHOW_TEXT,
+                                                TranslatableComponent.of(confKey + "-2.bracket-click.hover"
+                                        ).args(TextComponent.of(args.getCommand())))),
+                                CodeFormat.wrap(confirmCommand)
+                                        .clickEvent(ClickEvent.of(ClickEvent.Action.SUGGEST_COMMAND,
+                                                confirmCommand))
+                        );
+
                 TextComponent message = TextComponent.builder("")
-                        .append(ErrorFormat.wrap("This command will "))
-                        .append(ErrorFormat.wrap("PERMANENTLY")
-                                .decoration(TextDecoration.BOLD, TextDecoration.State.TRUE))
-                        .append(ErrorFormat.wrap(" erase ALL animals in ALL loaded chunks in ALL loaded worlds. "))
+                        .append(line1)
                         .append(TextComponent.newline())
-                        .append(TextComponent.of("[Click]", TextColor.GREEN)
-                                .clickEvent(ClickEvent.of(ClickEvent.Action.RUN_COMMAND, confirmCommand))
-                                .hoverEvent(HoverEvent.of(HoverEvent.Action.SHOW_TEXT, TextComponent.of("Click to confirm /" + args.getCommand()))))
-                        .append(ErrorFormat.wrap(" or type "))
-                        .append(CodeFormat.wrap(confirmCommand)
-                                .clickEvent(ClickEvent.of(ClickEvent.Action.SUGGEST_COMMAND, confirmCommand)))
-                        .append(ErrorFormat.wrap(" to confirm."))
+                        .append(line2)
                         .build();
 
                 sender.print(message);
@@ -142,13 +160,23 @@ public class ToggleCommands {
 
             if (activityHaltToggle) {
                 if (!(sender instanceof LocalPlayer)) {
-                    sender.print("ALL intensive server activity halted.");
+                    sender.print(TranslatableComponent.of("worldguard.command.toggle.stop-lag.activity-halted"));
                 }
 
                 if (!args.hasFlag('s')) {
-                    worldGuard.getPlatform().broadcastNotification(LabelFormat.wrap("ALL intensive server activity halted by " + sender.getDisplayName() + "."));
+                    worldGuard.getPlatform().broadcastNotification(
+                            TextComponent.empty().append(
+                                    TranslatableComponent.of(
+                                            "worldguard.command.toggle.stop-lag.activity-halted-broadcast",
+                                            TextColor.YELLOW
+                                    ).args(TextComponent.of(sender.getDisplayName()))
+                            )
+                    );
                 } else {
-                    sender.print("(Silent) ALL intensive server activity halted by " + sender.getDisplayName() + ".");
+                    sender.print(
+                            TranslatableComponent.of("worldguard.command.toggle.stop-lag.activity-halted-silent")
+                                    .args(TextComponent.of(sender.getDisplayName()))
+                    );
                 }
 
                 for (World world : WorldEdit.getInstance().getPlatformManager().queryCapability(Capability.GAME_HOOKS).getWorlds()) {
@@ -162,19 +190,24 @@ public class ToggleCommands {
                     }
 
                     if (removed > 10) {
-                        sender.printRaw("" + removed + " entities (>10) auto-removed from "
-                                + world.getName());
+                        sender.print(TranslatableComponent.of("worldguard.command.toggle.stop-lag.auto-removed").args(
+                                TextComponent.of(removed), TextComponent.of(world.getName())
+                        ));
                     }
                 }
             } else {
                 if (!args.hasFlag('s')) {
-                    worldGuard.getPlatform().broadcastNotification(LabelFormat.wrap("ALL intensive server activity is now allowed."));
+                    worldGuard.getPlatform().broadcastNotification(TextComponent.empty().append(
+                            TranslatableComponent.of(
+                                    "worldguard.command.toggle.stop-lag.activity-not-halted-now",
+                                    TextColor.YELLOW))
+                    );
                     
                     if (!(sender instanceof LocalPlayer)) {
-                        sender.print("ALL intensive server activity is now allowed.");
+                        sender.print(TranslatableComponent.of("worldguard.command.toggle.stop-lag.activity-not-halted-now"));
                     }
                 } else {
-                    sender.print("(Silent) ALL intensive server activity is now allowed.");
+                    sender.print(TranslatableComponent.of("worldguard.command.toggle.stop-lag.activity-not-halted-now-silent"));
                 }
             }
         }

@@ -21,6 +21,8 @@ package com.sk89q.worldguard.bukkit.listener;
 
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.math.BlockVector3;
+import com.sk89q.worldedit.util.formatting.text.Component;
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.bukkit.BukkitWorldConfiguration;
@@ -699,8 +701,9 @@ public class WorldGuardEntityListener extends AbstractListener {
                 if (localPlayer != null && !cause.isIndirect()) {
                     // NB there is no way to cancel the teleport without PTA (since PlayerPortal doesn't have block info)
                     // removing PTA was a mistake
-                    String message = regions.queryValue(localPlayer, Flags.DENY_MESSAGE);
-                    RegionProtectionListener.formatAndSendDenyMessage("create portals", localPlayer, message);
+                    Component message = regions.queryValue(localPlayer, Flags.DENY_MESSAGE_COMPONENT);
+                    TranslatableComponent what = TranslatableComponent.of("worldguard.error.denied.what.create-portals");
+                    RegionProtectionListener.formatAndSendDenyMessage(what, localPlayer, message);
                 }
                 event.setCancelled(true);
             }
