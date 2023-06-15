@@ -71,7 +71,6 @@ import com.sk89q.worldguard.protection.managers.migration.WorldHeightMigration;
 import com.sk89q.worldguard.protection.managers.storage.DriverType;
 import com.sk89q.worldguard.protection.managers.storage.RegionDriver;
 import com.sk89q.worldguard.protection.regions.GlobalProtectedRegion;
-import com.sk89q.worldguard.protection.regions.ProtectedPolygonalRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion.CircularInheritanceException;
 import com.sk89q.worldguard.protection.regions.RegionContainer;
@@ -335,13 +334,6 @@ public final class RegionCommands extends RegionCommandsBase {
 
         // Check claim volume
         if (!permModel.mayClaimRegionsUnbounded()) {
-            if (region instanceof ProtectedPolygonalRegion) {
-                throw new CommandException(
-                        TranslatableComponent.of("worldguard.error.command.region.claim.polygons-are-not-supported"),
-                        ImmutableList.of()
-                );
-            }
-
             if (region.volume() > wcfg.maxClaimVolume) {
                 player.printError(TranslatableComponent.of("worldguard.error.command.region.claim.too-large"));
                 player.printError(TranslatableComponent.of("worldguard.error.command.region.claim.too-large.min-max")

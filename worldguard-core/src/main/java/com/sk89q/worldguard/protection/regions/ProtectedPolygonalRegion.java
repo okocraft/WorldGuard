@@ -184,8 +184,23 @@ public class ProtectedPolygonalRegion extends ProtectedRegion {
 
     @Override
     public int volume() {
-        // TODO: Fix this -- the previous algorithm returned incorrect results, but the current state of this method is even worse
-        return 0;
+        int volume = 0;
+
+        int minX = getMinimumPoint().getX();
+        int maxX = getMaximumPoint().getX();
+        int minZ = getMinimumPoint().getZ();
+        int maxZ = getMaximumPoint().getZ();
+
+        int y = getMinimumPoint().getY();
+
+        for (int x = minX; x <= maxX; x++) {
+            for (int z = minZ; z <= maxZ; z++) {
+                if (contains(x, y, z)) {
+                    volume++;
+                }
+            }
+        }
+        return volume;
     }
 
 }
