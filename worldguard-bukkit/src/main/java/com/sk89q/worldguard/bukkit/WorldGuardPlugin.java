@@ -108,6 +108,12 @@ public class WorldGuardPlugin extends JavaPlugin {
     private static BukkitWorldGuardPlatform platform;
     private final CommandsManager<Actor> commands;
     private PlayerMoveListener playerMoveListener;
+    // okocraft start - Folia
+    private final com.sk89q.worldguard.bukkit.scheduler.Scheduler scheduler = com.sk89q.worldguard.bukkit.scheduler.Scheduler.create(this);
+    public com.sk89q.worldguard.bukkit.scheduler.Scheduler getScheduler() {
+        return scheduler;
+    }
+    // okocraft end
 
     private static final int BSTATS_PLUGIN_ID = 3283;
 
@@ -164,7 +170,7 @@ public class WorldGuardPlugin extends JavaPlugin {
             reg.register(GeneralCommands.class);
         }
 
-        getServer().getScheduler().scheduleSyncRepeatingTask(this, sessionManager, BukkitSessionManager.RUN_DELAY, BukkitSessionManager.RUN_DELAY);
+        scheduler.runGlobalAtFixedRate(sessionManager, BukkitSessionManager.RUN_DELAY, BukkitSessionManager.RUN_DELAY); // okocraft - Folia
 
         // Register events
         getServer().getPluginManager().registerEvents(sessionManager, this);
@@ -205,7 +211,7 @@ public class WorldGuardPlugin extends JavaPlugin {
         }
         worldListener.registerEvents();
 
-        Bukkit.getScheduler().runTask(this, () -> {
+        getScheduler().runGlobal(() -> { // okocraft - Folia
             for (Player player : Bukkit.getServer().getOnlinePlayers()) {
                 ProcessPlayerEvent event = new ProcessPlayerEvent(player);
                 Events.fire(event);
@@ -266,7 +272,7 @@ public class WorldGuardPlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         WorldGuard.getInstance().disable();
-        this.getServer().getScheduler().cancelTasks(this);
+        this.scheduler.cancelTasks(); // okocraft - Folia
     }
 
     @Override

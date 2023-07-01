@@ -243,7 +243,7 @@ public class BukkitWorldGuardPlatform implements WorldGuardPlatform {
     public void addPlatformReports(ReportList report) {
         report.add(new ServerReport());
         report.add(new PluginReport());
-        report.add(new SchedulerReport());
+        WorldGuardPlugin.inst().getScheduler().addReport(report); // okocraft - Folia
         report.add(new ServicesReport());
         report.add(new WorldReport());
         report.add(new PerformanceReport());

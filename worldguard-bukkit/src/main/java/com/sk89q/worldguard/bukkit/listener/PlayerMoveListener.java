@@ -99,7 +99,7 @@ public class PlayerMoveListener extends AbstractListener {
         }
         com.sk89q.worldedit.util.Location weLocation = session.testMoveTo(localPlayer, BukkitAdapter.adapt(to), moveType);
 
-        if (weLocation != null) {
+        if (false || weLocation != null) { // okocraft - Folia - No good alternative implementations came to mind in five minutes. (entry/exit flag will not be working)
             final Location override = BukkitAdapter.adapt(weLocation);
             override.setX(override.getBlockX() + 0.5);
             override.setY(override.getBlockY());

@@ -92,7 +92,9 @@ public class BukkitWorldConfiguration extends YamlWorldConfiguration {
         plugin.createDefaultConfiguration(blacklistFile, "blacklist.txt");
 
         config = new YAMLProcessor(configFile, true, YAMLFormat.EXTENDED);
+        synchronized (BukkitWorldConfiguration.class) { // okocraft - Folia
         loadConfiguration();
+        } // okocraft - Folia
 
         if (summaryOnStart) {
             log.info("Loaded configuration for world '" + worldName + "'");
