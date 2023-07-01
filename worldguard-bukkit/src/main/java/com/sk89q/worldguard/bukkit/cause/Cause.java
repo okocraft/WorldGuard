@@ -291,6 +291,15 @@ public final class Cause {
 
                 seen.add(o);
 
+                // okocraft start - Folia
+                if (PaperLib.isPaper() && !(o instanceof Player)) {
+                    if ((o instanceof Entity entity && !Bukkit.isOwnedByCurrentRegion(entity)) ||
+                            (o instanceof Block block && !Bukkit.isOwnedByCurrentRegion(block))) {
+                        continue;
+                    }
+                }
+                // okocraft end
+
                 if (o instanceof TNTPrimed) {
                     addAll(((TNTPrimed) o).getSource());
                 } else if (o instanceof Projectile) {

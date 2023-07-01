@@ -97,17 +97,12 @@ public class BukkitConfigurationManager extends YamlConfigurationManager {
 
     public BukkitWorldConfiguration get(String worldName) {
         BukkitWorldConfiguration config = worlds.get(worldName);
-        BukkitWorldConfiguration newConfig = null;
-
-        while (config == null) {
-            if (newConfig == null) {
-                newConfig = new BukkitWorldConfiguration(plugin, worldName, this.getConfig());
-            }
-            worlds.putIfAbsent(worldName, newConfig);
-            config = worlds.get(worldName);
-        }
-
-        return config;
+        // okocraft start - Folia
+        if (config != null) return config;
+        BukkitWorldConfiguration newConfig = new BukkitWorldConfiguration(plugin, worldName, this.getConfig());
+        BukkitWorldConfiguration existing = worlds.putIfAbsent(worldName, newConfig);
+        return existing != null ? existing : newConfig;
+        // okocraft end
     }
 
     public void updateCommandBookGodMode() {
