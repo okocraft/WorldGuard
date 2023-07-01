@@ -94,7 +94,7 @@ public class BukkitRegionContainer extends RegionContainer {
             }
         }, plugin);
 
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, cache::invalidateAll, CACHE_INVALIDATION_INTERVAL, CACHE_INVALIDATION_INTERVAL);
+        plugin.getScheduler().runAsyncAtFixedRate(cache::invalidateAll, CACHE_INVALIDATION_INTERVAL, CACHE_INVALIDATION_INTERVAL); // okocraft - Folia
     }
 
     public void shutdown() {

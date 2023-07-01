@@ -1022,9 +1022,11 @@ public class EventAbstractionListener extends AbstractListener {
 
             handleInventoryHolderUse(event, cause, targetHolder);
 
-            if (event.isCancelled() && causeHolder instanceof Hopper && wcfg.breakDeniedHoppers) {
-                Bukkit.getScheduler().scheduleSyncDelayedTask(getPlugin(),
-                        () -> ((Hopper) causeHolder).getBlock().breakNaturally());
+            // okocraft start - Folia
+            // see https://github.com/EngineHub/WorldGuard/pull/2012/files#r1226667636
+            if (event.isCancelled() && causeHolder instanceof Hopper hopper && wcfg.breakDeniedHoppers) {
+                getPlugin().getScheduler().runAtRegion(hopper.getLocation(), () -> hopper.getBlock().breakNaturally());
+            // okocraft end
             } else {
                 entry.setCancelled(event.isCancelled());
             }
