@@ -1061,6 +1061,7 @@ public class EventAbstractionListener extends AbstractListener {
             }
 
             if (event.isCancelled() && causeHolder instanceof Hopper hopper && wcfg.breakDeniedHoppers) {
+                if (false) { // okocraft - Do not break hoppers
                 Runnable task = () -> hopper.getBlock().breakNaturally();
 
                 if (WorldGuardPlugin.inst().isFolia()) {
@@ -1073,6 +1074,7 @@ public class EventAbstractionListener extends AbstractListener {
                 } else {
                     Bukkit.getScheduler().scheduleSyncDelayedTask(getPlugin(), task);
                 }
+                } // okocraft - Do not break hoppers
             } else {
                 entry.setCancelled(event.isCancelled());
             }
