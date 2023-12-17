@@ -1025,7 +1025,7 @@ public class EventAbstractionListener extends AbstractListener {
             // okocraft start - Folia
             // see https://github.com/EngineHub/WorldGuard/pull/2012/files#r1226667636
             if (event.isCancelled() && causeHolder instanceof Hopper hopper && wcfg.breakDeniedHoppers) {
-                getPlugin().getScheduler().runAtRegion(hopper.getLocation(), () -> hopper.getBlock().breakNaturally());
+                // getPlugin().getScheduler().runAtRegion(hopper.getLocation(), () -> hopper.getBlock().breakNaturally());
             // okocraft end
             } else {
                 entry.setCancelled(event.isCancelled());
