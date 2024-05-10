@@ -42,6 +42,10 @@ tasks.named<ShadowJar>("shadowJar") {
         relocate("org.bstats", "com.sk89q.worldguard.bukkit.bstats")
         relocate("io.papermc.lib", "com.sk89q.worldguard.bukkit.paperlib")
     }
+
+    manifest {
+        attributes("paperweight-mappings-namespace" to "mojang")
+    }
 }
 
 tasks.named("assemble").configure {
