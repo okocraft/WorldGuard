@@ -583,7 +583,7 @@ public class RegionProtectionListener extends AbstractListener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true)
+    // @EventHandler(ignoreCancelled = true)
     public void onVehicleExit(VehicleExitEvent event) {
         Entity vehicle = event.getVehicle();
         if (!isRegionSupportEnabled(vehicle.getWorld())) return; // Region support disabled
