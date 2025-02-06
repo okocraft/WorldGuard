@@ -314,10 +314,15 @@ public final class RegionCommands extends RegionCommandsBase {
         // Check if this region overlaps any other region
         if (regions.size() > 0) {
             if (!regions.isOwnerOfAll(player)) {
-                throw new CommandException(
-                        TranslatableComponent.of("worldguard.error.command.region.claim.overlaps"),
-                        ImmutableList.of()
-                );
+                player.printError(TranslatableComponent.of("worldguard.error.command.region.claim.overlaps"));
+                var builder = TextComponent.builder();
+                regions.getRegions().stream()
+                        .map(ProtectedRegion::getId)
+                        .sorted()
+                        .map(regionID -> TextComponent.of(regionID, TextColor.AQUA).clickEvent(ClickEvent.of(ClickEvent.Action.RUN_COMMAND, "/rg info -w \"" + player.getWorld().getName() + "\" " + regionID)))
+                        .forEachOrdered(component -> builder.append(component).append(TextComponent.space()));
+                player.print(builder.build());
+                return;
             }
             if (wcfg.claimOnlyInsideExistingRegions && !region.isCoveredBy(regions.getRegions())) {
                 throw new CommandException(
@@ -426,13 +431,15 @@ public final class RegionCommands extends RegionCommandsBase {
         // Check if this region overlaps any other region
         if (regions.size() > 0) {
             if (!regions.isOwnerOfAll(player)) {
-                var builder = TranslatableComponent.of("worldguard.error.command.region.claim.overlaps").toBuilder().append(TextComponent.newline());
+                player.printError(TranslatableComponent.of("worldguard.error.command.region.claim.overlaps"));
+                var builder = TextComponent.builder();
                 regions.getRegions().stream()
                         .map(ProtectedRegion::getId)
                         .sorted()
                         .map(regionID -> TextComponent.of(regionID, TextColor.AQUA).clickEvent(ClickEvent.of(ClickEvent.Action.RUN_COMMAND, "/rg info -w \"" + player.getWorld().getName() + "\" " + regionID)))
                         .forEachOrdered(component -> builder.append(component).append(TextComponent.space()));
-                throw new CommandException(builder.build(), ImmutableList.of());
+                player.print(builder.build());
+                return;
             }
             if (wcfg.claimOnlyInsideExistingRegions && !region.isCoveredBy(regions.getRegions())) {
                 throw new CommandException(
@@ -530,13 +537,15 @@ public final class RegionCommands extends RegionCommandsBase {
         // Check if this region overlaps any other region
         if (regions.size() > 0) {
             if (!regions.isOwnerOfAll(player)) {
-                var builder = TranslatableComponent.of("worldguard.error.command.region.claim.overlaps").toBuilder().append(TextComponent.newline());
+                player.printError(TranslatableComponent.of("worldguard.error.command.region.claim.overlaps"));
+                var builder = TextComponent.builder();
                 regions.getRegions().stream()
                         .map(ProtectedRegion::getId)
                         .sorted()
-                        .map(regionID -> TextComponent.of(regionID, TextColor.AQUA).clickEvent(ClickEvent.of(ClickEvent.Action.RUN_COMMAND, "/rg info -w \"" + world + "\" " + regionID)))
+                        .map(regionID -> TextComponent.of(regionID, TextColor.AQUA).clickEvent(ClickEvent.of(ClickEvent.Action.RUN_COMMAND, "/rg info -w \"" + player.getWorld().getName() + "\" " + regionID)))
                         .forEachOrdered(component -> builder.append(component).append(TextComponent.space()));
-                throw new CommandException(builder.build(), ImmutableList.of());
+                player.print(builder.build());
+                return;
             }
             if (wcfg.claimOnlyInsideExistingRegions && !region.isCoveredBy(regions.getRegions())) {
                 throw new CommandException(
