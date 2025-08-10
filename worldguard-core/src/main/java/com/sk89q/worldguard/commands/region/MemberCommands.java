@@ -210,7 +210,10 @@ public class MemberCommands extends RegionCommandsBase {
 
         Callable<DefaultDomain> callable;
         if (args.hasFlag('a')) {
-            callable = region::getMembers;
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
         } else {
             if (args.argsLength() < 2) {
                 throw new CommandException(
@@ -269,7 +272,10 @@ public class MemberCommands extends RegionCommandsBase {
 
         Callable<DefaultDomain> callable;
         if (args.hasFlag('a')) {
-            callable = region::getOwners;
+            throw new CommandException(
+                    TranslatableComponent.of("worldguard.error.command.no-permission"),
+                    ImmutableList.of()
+            );
         } else {
             if (args.argsLength() < 2) {
                 throw new CommandException(
